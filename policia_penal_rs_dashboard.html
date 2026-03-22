@@ -1,0 +1,3492 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polícia Penal RS — Painel de Estudos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0e0f13;
+  --bg2: #15161c;
+  --bg3: #1c1e27;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f0f4;
+  --text2: #8a8b96;
+  --text3: #5a5b66;
+  --accent: #e8c84a;
+  --accent2: #d4a832;
+  --green: #4ade80;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --orange: #fb923c;
+  --teal: #2dd4bf;
+  --card-r: 12px;
+  --font-main: 'DM Sans', sans-serif;
+  --font-title: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-main);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+/* LAYOUT */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+}
+.logo {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  white-space: nowrap;
+  margin-right: 8px;
+}
+.logo span { color: var(--text2); font-weight: 400; }
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  transition: all .15s;
+  font-family: var(--font-main);
+}
+.nav-tab:hover { color: var(--text); background: var(--bg3); }
+.nav-tab.active { color: var(--accent); background: rgba(232,200,74,0.1); }
+.streak-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(251,146,60,0.12);
+  border: 1px solid rgba(251,146,60,0.25);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--orange);
+  white-space: nowrap;
+  margin-left: auto;
+}
+.content { flex: 1; padding: 24px; max-width: 1280px; margin: 0 auto; width: 100%; }
+.page { display: none; }
+.page.active { display: block; width: 100%; }
+/* CARDS */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--card-r);
+  padding: 20px;
+}
+.card-sm { padding: 16px; }
+.card-title {
+  font-family: var(--font-title);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 12px;
+}
+.metric {
+  font-family: var(--font-title);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+}
+.metric-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+/* GRID HELPERS */
+.g2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.g-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.gap16 { display: flex; flex-direction: column; gap: 16px; }
+.gap12 { display: flex; flex-direction: column; gap: 12px; }
+/* PROGRESS BAR */
+.prog-bar {
+  height: 6px;
+  background: var(--bg3);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .4s ease;
+}
+/* BADGES */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+.badge-green { background: rgba(74,222,128,.12); color: var(--green); border: 1px solid rgba(74,222,128,.2); }
+.badge-red { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.2); }
+.badge-yellow { background: rgba(232,200,74,.12); color: var(--accent); border: 1px solid rgba(232,200,74,.2); }
+.badge-blue { background: rgba(96,165,250,.12); color: var(--blue); border: 1px solid rgba(96,165,250,.2); }
+.badge-gray { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+/* CHECKBOX TOGGLE */
+.check-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border2);
+  background: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  color: transparent;
+  font-size: 14px;
+}
+.check-btn.done {
+  background: rgba(74,222,128,.15);
+  border-color: rgba(74,222,128,.4);
+  color: var(--green);
+}
+/* INPUTS */
+input[type="number"], input[type="text"], select, textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: var(--font-main);
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: border .15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent2);
+}
+select option { background: var(--bg2); }
+label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+/* BUTTONS */
+.btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .15s;
+}
+.btn-accent { background: var(--accent); color: #0e0f13; }
+.btn-accent:hover { background: var(--accent2); }
+.btn-ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+/* SECTION TITLE */
+.section-title {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+/* POMODORO */
+.pom-display {
+  font-family: var(--font-mono);
+  font-size: 52px;
+  font-weight: 500;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+/* TASK ITEM */
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.task-item:last-child { border-bottom: none; }
+.task-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+/* CONF STARS */
+.stars { display: flex; gap: 2px; }
+.star {
+  width: 14px; height: 14px;
+  cursor: pointer;
+  color: var(--text3);
+  transition: color .1s;
+  font-size: 14px;
+}
+.star.on { color: var(--accent); }
+/* DISCIPLINE HEADER */
+.disc-header {
+  background: linear-gradient(135deg, var(--bg2), var(--bg3));
+  border: 1px solid var(--border);
+  border-radius: var(--card-r);
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.disc-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+/* WEEKLY CHART */
+.week-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+/* REVISION ITEM */
+.rev-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rev-item:last-child { border-bottom: none; }
+.urgency {
+  width: 4px;
+  border-radius: 99px;
+  align-self: stretch;
+  min-height: 20px;
+  flex-shrink: 0;
+}
+/* SCORE RING */
+.score-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+}
+.modal-title {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.flex-row { display: flex; gap: 12px; align-items: flex-end; }
+.flex-row > * { flex: 1; }
+/* ALERT SENSÍVEL */
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(248,113,113,0.06);
+  border: 1px solid rgba(248,113,113,0.2);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.alert-item.resolved {
+  background: rgba(74,222,128,0.05);
+  border-color: rgba(74,222,128,0.15);
+  opacity: 0.6;
+}
+/* ACTIVITY LOG */
+.act-type-badge {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.act-teoria { background: rgba(96,165,250,.12); color: #60a5fa; border: 1px solid rgba(96,165,250,.2); }
+.act-exercicio { background: rgba(251,146,60,.12); color: #fb923c; border: 1px solid rgba(251,146,60,.2); }
+.act-simulado { background: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.2); }
+.act-revisao { background: rgba(45,212,191,.12); color: #2dd4bf; border: 1px solid rgba(45,212,191,.2); }
+/* MODAL LARGE */
+.modal-lg { max-width: 560px; }
+/* HABIT TRACKER */
+.habit-day {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--text3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  position: relative;
+}
+.habit-day.done-estudar { background: rgba(232,200,74,0.25); border-color: rgba(232,200,74,0.5); color: var(--accent); }
+.habit-day.done-academia { background: rgba(96,165,250,0.25); border-color: rgba(96,165,250,0.5); color: var(--blue); }
+.habit-day.done-both { background: rgba(74,222,128,0.25); border-color: rgba(74,222,128,0.5); color: var(--green); }
+.habit-day.future { opacity: 0.3; cursor: default; }
+/* AGENDA CALENDAR */
+.cal-day {
+  min-height: 64px;
+  background: var(--bg3);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 6px;
+  cursor: pointer;
+  transition: border-color .15s;
+  position: relative;
+}
+.cal-day:hover { border-color: var(--border2); }
+.cal-day.today-cal { border-color: rgba(232,200,74,0.5); background: rgba(232,200,74,0.04); }
+.cal-day.other-month { opacity: 0.35; }
+.cal-day-num { font-size: 11px; font-weight: 500; color: var(--text2); margin-bottom: 3px; }
+.cal-day.today-cal .cal-day-num { color: var(--accent); }
+.cal-event {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-event-study { background: rgba(232,200,74,.15); color: var(--accent); }
+.cal-event-rev { background: rgba(45,212,191,.15); color: var(--teal); }
+.cal-event-extra { background: rgba(167,139,250,.15); color: var(--purple); }
+/* DAY POPUP */
+.day-popup {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.day-popup.open { display: flex; }
+.day-popup-inner {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+/* CYCLE TASKS */
+.cycle-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cycle-task:last-child { border-bottom: none; }
+.cycle-task input[type=checkbox] {
+  width: 18px; height: 18px;
+  accent-color: var(--green);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.cycle-task.done-task .task-label { text-decoration: line-through; color: var(--text3); }
+.cycle-slot-time {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text3);
+  white-space: nowrap;
+  padding-top: 2px;
+  min-width: 70px;
+}
+@media (max-width: 720px) {
+  /* LAYOUT */
+  .g4 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: 1fr; }
+  .g2 { grid-template-columns: 1fr; }
+  .content { padding: 12px; }
+
+  /* HEADER — scroll horizontal nas abas */
+  .header { padding: 0 12px; height: auto; min-height: 56px; flex-wrap: nowrap; gap: 10px; }
+  .logo { font-size: 13px; }
+  .nav-tabs { gap: 2px; }
+  .nav-tab { font-size: 12px; padding: 5px 10px; }
+  .streak-badge { font-size: 11px; padding: 3px 8px; }
+
+  /* CARDS */
+  .card { padding: 14px; }
+  .card-sm { padding: 12px; }
+
+  /* METRICS — 2 colunas no mobile */
+  .g4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* METRIC NUMBERS menores */
+  .metric { font-size: 22px; }
+
+  /* FLEX-ROW empilha no mobile */
+  .flex-row { flex-direction: column; gap: 10px; }
+  .flex-row > * { flex: 1 1 auto; }
+
+  /* DISC TABLE — esconde colunas menos importantes */
+  .disc-table-hide { display: none; }
+
+  /* POMODORO */
+  .pom-display { font-size: 36px; }
+
+  /* CYCLE SLOT TIME */
+  .cycle-slot-time { min-width: 50px; font-size: 10px; }
+
+  /* CAL DAYS — menor altura */
+  .cal-day { min-height: 48px; padding: 4px; }
+  .cal-event { font-size: 9px; padding: 1px 3px; }
+
+  /* DISC HEADER empilha */
+  .disc-header { flex-wrap: wrap; gap: 10px; }
+
+  /* SECTION TITLE menor */
+  .section-title { font-size: 16px; }
+
+  /* MODAL ocupa tela toda */
+  .modal { padding: 16px; }
+  .modal-lg { max-width: 100%; }
+  .day-popup-inner { padding: 16px; }
+
+  /* NOTAS — coluna única no mobile */
+  #page-notas table,
+  #page-notas tr,
+  #page-notas td { display: block; width: 100% !important; padding: 0 !important; }
+  #page-notas td + td { margin-top: 16px; }
+
+  /* AGENDA WEEK — menos colunas visíveis */
+  #agenda-week-grid { grid-template-columns: repeat(4, 1fr) !important; }
+
+  /* BOTTOM SAFE AREA para celulares com notch */
+  .content { padding-bottom: 24px; }
+}
+
+@media (max-width: 420px) {
+  .g4 { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .metric { font-size: 20px; }
+  .nav-tab { font-size: 11px; padding: 5px 8px; }
+  #agenda-week-grid { grid-template-columns: repeat(3, 1fr) !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">PPENAL<span>/RS</span></div>
+  <nav class="nav-tabs" id="mainNav">
+    <button class="nav-tab active" onclick="goPage('home')">Início</button>
+    <button class="nav-tab" onclick="goPage('agenda')">Agenda</button>
+    <button class="nav-tab" onclick="goPage('disciplinas')">Disciplinas</button>
+    <button class="nav-tab" onclick="goPage('sensiveis')">Tópicos Sensíveis</button>
+    <button class="nav-tab" onclick="goPage('questoes')">Questões</button>
+    <button class="nav-tab" onclick="goPage('ciclo')">Ciclo de Estudos</button>
+    <button class="nav-tab" onclick="goPage('jornada')">Jornada</button>
+    <button class="nav-tab" onclick="goPage('notas')">Bloco de Notas</button>
+  </nav>
+  <div class="streak-badge" id="streakBadge">🔥 <span id="streakCount">1</span> dia</div>
+</header>
+
+<main class="content">
+<!-- ===== HOME ===== -->
+<div class="page active" id="page-home">
+  <!-- FRASE MOTIVACIONAL -->
+  <div style="margin-bottom:20px;padding:14px 20px;background:rgba(232,200,74,0.06);border:1px solid rgba(232,200,74,0.15);border-radius:12px;display:flex;align-items:center;gap:12px">
+    <div style="font-size:20px">💬</div>
+    <div>
+      <div style="font-size:13px;color:var(--accent);font-weight:500;font-style:italic" id="frase-do-dia"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px" id="frase-autor"></div>
+    </div>
+  </div>
+
+  <div class="g4" style="margin-bottom:20px">
+    <div class="card card-sm">
+      <div class="card-title">Acertos hoje</div>
+      <div class="metric" id="home-acertos">—</div>
+      <div class="metric-sub" id="home-acertos-sub">Nenhuma questão registrada</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">Score geral</div>
+      <div class="metric" id="home-score" style="color:var(--accent)">—%</div>
+      <div class="metric-sub">taxa de acertos</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">Questões total</div>
+      <div class="metric" id="home-total-q">0</div>
+      <div class="metric-sub">questões respondidas</div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-title">Assuntos concluídos</div>
+      <div class="metric" id="home-studied">0</div>
+      <div class="metric-sub" id="home-studied-sub">de 0 assuntos</div>
+    </div>
+  </div>
+
+  <div class="g2" style="gap:20px">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- AGENDA DO DIA -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">📅 Agenda de hoje</div>
+          <button class="btn btn-accent" style="font-size:11px;padding:5px 14px" onclick="openActivityModal()">✓ Registrar atividade</button>
+        </div>
+        <div id="agenda-list" class="gap12">
+          <div style="color:var(--text2);font-size:13px">Calculando agenda...</div>
+        </div>
+      </div>
+      <!-- REVISÕES PENDENTES -->
+      <div class="card">
+        <div class="card-title">🔁 Revisões — próximos 15 dias</div>
+        <div id="revisions-list">
+          <div style="color:var(--text2);font-size:13px">Nenhuma revisão pendente. Continue estudando!</div>
+        </div>
+      </div>
+      <!-- TÓPICOS SENSÍVEIS -->
+      <div id="sensitive-bar" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#f87171">🚨 Tópicos sensíveis — atenção redobrada</div>
+          <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="openSensitiveModal()">+ Adicionar</button>
+        </div>
+        <div id="sensitive-list"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- PONTOS CRÍTICOS -->
+      <div class="card">
+        <div class="card-title">⚠️ Pontos críticos — pior desempenho</div>
+        <div id="critical-list" class="gap12">
+          <div style="color:var(--text2);font-size:13px">Registre questões para ver seu desempenho por disciplina.</div>
+        </div>
+      </div>
+      <!-- GRÁFICO SEMANAL -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">📈 Evolução semanal</div>
+          <div style="display:flex;gap:12px;font-size:11px">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#e8c84a;display:inline-block"></span>Acertos %</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:4px;background:rgba(45,212,191,0.7);display:inline-block"></span>Horas</span>
+          </div>
+        </div>
+        <div style="position:relative;height:180px">
+          <canvas id="weekChart"></canvas>
+        </div>
+      </div>
+      <!-- REGISTRO DE ATIVIDADES -->
+      <div class="card">
+        <div class="card-title">📋 Atividades recentes</div>
+        <div id="activity-log-list">
+          <div style="color:var(--text2);font-size:13px">Nenhuma atividade registrada ainda.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== JORNADA ===== -->
+<div class="page" id="page-jornada">
+  <div class="section-title">Jornada de Estudos</div>
+  <div style="margin-bottom:20px;color:var(--text2);font-size:13px">
+    Progresso geral de conclusão dos tópicos por disciplina. Marque os assuntos como estudados nas abas de cada disciplina.
+  </div>
+  <div id="jornada-grid" class="gap16"></div>
+</div>
+
+<!-- ===== DISCIPLINAS (UNIFICADA) ===== -->
+<div class="page" id="page-disciplinas">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <div class="section-title" style="margin-bottom:0">Disciplinas</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="disc-selector">
+    </div>
+  </div>
+  <div id="disc-content"></div>
+</div>
+
+<!-- ===== QUESTÕES ===== -->
+<div class="page" id="page-questoes">
+  <div class="section-title">Registrar Questões</div>
+  <div class="g2" style="gap:20px">
+    <div class="card">
+      <div class="card-title">Nova entrada</div>
+      <div class="gap12">
+        <div class="form-group">
+          <label>Disciplina</label>
+          <select id="q-disc" onchange="updateTopicSelect()">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tópico</label>
+          <select id="q-topic">
+            <option value="">Selecione a disciplina primeiro</option>
+          </select>
+        </div>
+        <div class="flex-row">
+          <div class="form-group">
+            <label>Questões respondidas</label>
+            <input type="number" id="q-total" min="1" max="200" value="10">
+          </div>
+          <div class="form-group">
+            <label>Acertos</label>
+            <input type="number" id="q-hits" min="0" max="200" value="7">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="text" id="q-date" placeholder="Hoje">
+        </div>
+        <button class="btn btn-accent" onclick="registerQuestion()" style="width:100%">Registrar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Histórico recente</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Disciplina</th>
+              <th>Tópico</th>
+              <th>Q</th>
+              <th>Acertos</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody id="q-history"></tbody>
+        </table>
+      </div>
+      <div id="q-empty" style="text-align:center;padding:32px;color:var(--text3);font-size:13px">
+        Nenhuma questão registrada ainda.
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:20px" class="card">
+    <div class="card-title">Desempenho por disciplina</div>
+    <div style="position:relative;height:280px">
+      <canvas id="perfChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CICLO DE ESTUDOS ===== -->
+<div class="page" id="page-ciclo">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div class="section-title" style="margin-bottom:0">Ciclo de Estudos</div>
+  </div>
+  <div style="color:var(--text2);font-size:13px;margin-bottom:20px">Distribuição automática de 1 hora por disciplina/tópico, respeitando os horários disponíveis. As atividades não concluídas são automaticamente reagendadas para o próximo dia.</div>
+
+  <div class="g2" style="gap:20px;margin-bottom:20px">
+    <div class="card" style="border-color:rgba(232,200,74,0.25);background:rgba(232,200,74,0.03)">
+      <div class="card-title">⏰ Janelas de estudo disponíveis</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:10px;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:16px">📅</div>
+          <div>
+            <div style="font-size:13px;font-weight:500">Seg – Sex</div>
+            <div style="font-size:12px;color:var(--text2)">08:00–10:30 (2,5h) + 21:00–22:00 (1h)</div>
+          </div>
+          <div style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--accent)">3,5h</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:16px">🎯</div>
+          <div>
+            <div style="font-size:13px;font-weight:500">Sáb + Dom</div>
+            <div style="font-size:12px;color:var(--text2)">18:00–21:00 (3h)</div>
+          </div>
+          <div style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--accent)">3h</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Estatísticas do ciclo</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ciclo-stats"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="card-title" style="margin-bottom:0">📋 Ciclo completo — próximos 14 dias</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="cyclePrevWeek()">← Semana</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="cycleNextWeek()">Semana →</button>
+      </div>
+    </div>
+    <div id="ciclo-grid"></div>
+  </div>
+</div>
+
+<!-- ===== AGENDA ===== -->
+<div class="page" id="page-agenda">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div class="section-title" style="margin-bottom:0">Agenda de Estudos</div>
+    <button class="btn btn-accent" style="font-size:12px" onclick="openExtraModal()">+ Compromisso extra</button>
+  </div>
+
+  <!-- VIEW TABS -->
+  <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--bg3);padding:4px;border-radius:10px;width:fit-content">
+    <button class="btn" id="view-tab-day" style="font-size:12px;padding:6px 16px;border-radius:8px;border:none;background:var(--accent);color:#0e0f13" onclick="setAgendaView('day')">Diário</button>
+    <button class="btn btn-ghost" id="view-tab-week" style="font-size:12px;padding:6px 16px;border-radius:8px;border:none" onclick="setAgendaView('week')">Semanal</button>
+    <button class="btn btn-ghost" id="view-tab-month" style="font-size:12px;padding:6px 16px;border-radius:8px;border:none" onclick="setAgendaView('month')">Mensal</button>
+  </div>
+
+  <!-- DAILY VIEW -->
+  <div id="agenda-view-day">
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button class="btn btn-ghost" style="padding:5px 12px" onclick="agendaDayPrev()">←</button>
+        <div style="font-family:var(--font-title);font-size:15px;font-weight:600" id="agenda-day-title"></div>
+        <button class="btn btn-ghost" style="padding:5px 12px" onclick="agendaDayNext()">→</button>
+      </div>
+      <div id="agenda-day-tasks"></div>
+    </div>
+    <div class="g2" style="gap:16px">
+      <div class="card">
+        <div class="card-title">📋 Compromissos extras do dia</div>
+        <div id="agenda-day-extras"><div style="color:var(--text2);font-size:13px">Nenhum.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⏰ Janelas de estudo</div>
+        <div style="font-size:13px;color:var(--text2)" id="agenda-day-schedule"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEEKLY VIEW -->
+  <div id="agenda-view-week" style="display:none">
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button class="btn btn-ghost" style="padding:5px 12px" onclick="agendaWeekPrev()">←</button>
+        <div style="font-family:var(--font-title);font-size:15px;font-weight:600" id="agenda-week-title"></div>
+        <button class="btn btn-ghost" style="padding:5px 12px" onclick="agendaWeekNext()">→</button>
+      </div>
+      <div id="agenda-week-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Compromissos extras da semana</div>
+      <div id="agenda-week-extras"><div style="color:var(--text2);font-size:13px">Nenhum.</div></div>
+    </div>
+  </div>
+
+  <!-- MONTHLY VIEW -->
+  <div id="agenda-view-month" style="display:none">
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <button class="btn btn-ghost" style="padding:5px 12px" onclick="calPrev()">←</button>
+        <div style="font-family:var(--font-title);font-size:15px;font-weight:600" id="cal-title"></div>
+        <button class="btn btn-ghost" style="padding:5px 12px" onclick="calNext()">→</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+        <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px">Dom</div>
+        <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px">Seg</div>
+        <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px">Ter</div>
+        <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px">Qua</div>
+        <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px">Qui</div>
+        <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px">Sex</div>
+        <div style="text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px">Sáb</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px" id="cal-grid"></div>
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:50%;background:var(--green)"></div> Concluído</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent)"></div> Parcial</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:3px;background:rgba(45,212,191,.3)"></div> Revisão</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:3px;background:rgba(167,139,250,.3)"></div> Extra</div>
+        <div style="font-size:11px;color:var(--text3)">Clique em qualquer dia para ver detalhes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HABIT TRACKER -->
+  <div class="g2" style="gap:16px;margin-top:16px">
+    <div class="card">
+      <div class="card-title">⏰ Janelas de estudo — referência</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:16px">📅</div>
+          <div><div style="font-size:13px;font-weight:500">Seg – Sex</div><div style="font-size:12px;color:var(--text2)">08:00–10:30 · 21:00–22:00 · Total: 3,5h</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:16px">🎯</div>
+          <div><div style="font-size:13px;font-weight:500">Sáb + Dom</div><div style="font-size:12px;color:var(--text2)">18:00–21:00 · Total: 3h</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Todos os compromissos extras</div>
+      <div id="extras-list"><div style="color:var(--text2);font-size:13px">Nenhum compromisso extra cadastrado.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TÓPICOS SENSÍVEIS ===== -->
+<div class="page" id="page-sensiveis">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <div class="section-title" style="margin-bottom:0">🚨 Tópicos Sensíveis</div>
+    <button class="btn btn-accent" style="font-size:12px" onclick="openSensitiveModal()">+ Adicionar</button>
+  </div>
+  <div style="color:var(--text2);font-size:13px;margin-bottom:20px">Pontos de dificuldade identificados durante os estudos. A coluna <b>Relevância</b> indica o peso do tópico no edital da FUNDATEC.</div>
+  <div class="card">
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="filterSensitive('all')" id="sf-all">Todos</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="filterSensitive('pending')" id="sf-pending">Pendentes</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="filterSensitive('resolved')" id="sf-resolved">Revisados</button>
+    </div>
+    <div id="sensitive-page-list"></div>
+  </div>
+</div>
+
+<!-- MODAL: REGISTRAR ATIVIDADE -->
+<div class="modal-overlay" id="modal-activity" onclick="closeActivityModal(event)">
+  <div class="modal modal-lg">
+    <div class="modal-title">✓ Registrar conclusão de atividade</div>
+    <div class="gap12">
+      <div class="flex-row">
+        <div class="form-group">
+          <label>Disciplina</label>
+          <select id="act-disc" onchange="updateActTopic()">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tópico estudado</label>
+          <select id="act-topic">
+            <option value="">Selecione a disciplina</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex-row">
+        <div class="form-group">
+          <label>Tipo de estudo</label>
+          <select id="act-type">
+            <option value="teoria">Teoria</option>
+            <option value="exercicio">Exercícios</option>
+            <option value="simulado">Simulado</option>
+            <option value="revisao">Revisão</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tempo estudado (min)</label>
+          <input type="number" id="act-time" min="1" max="360" value="60">
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Questões realizadas (opcional)</div>
+        <div class="flex-row">
+          <div class="form-group">
+            <label>Questões respondidas</label>
+            <input type="number" id="act-q-total" min="0" max="200" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Acertos</label>
+            <input type="number" id="act-q-hits" min="0" max="200" placeholder="0">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Observação / tópico sensível identificado</label>
+        <textarea id="act-obs" rows="2" placeholder="Ex: Dificuldade em distinguir dolo eventual de culpa consciente..." style="resize:vertical"></textarea>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <input type="checkbox" id="act-needs-rev" style="width:16px;height:16px;cursor:pointer" onchange="toggleRevOptions()">
+          <label for="act-needs-rev" style="margin:0;cursor:pointer;font-size:13px;color:var(--text);font-weight:500">🔁 Agendar revisão deste tópico</label>
+        </div>
+        <div id="act-rev-options" style="display:none;padding:10px 12px;background:rgba(45,212,191,0.06);border:1px solid rgba(45,212,191,0.2);border-radius:8px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Revisar em quantos dias?</div>
+          <div style="display:flex;gap:8px">
+            <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3)" id="rev-opt-7">
+              <input type="radio" name="act-rev-days" value="7" style="accent-color:var(--teal)"> 7 dias
+            </label>
+            <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3)" id="rev-opt-15">
+              <input type="radio" name="act-rev-days" value="15" style="accent-color:var(--teal)" checked> 15 dias
+            </label>
+            <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3)" id="rev-opt-30">
+              <input type="radio" name="act-rev-days" value="30" style="accent-color:var(--teal)"> 30 dias
+            </label>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="act-is-sensitive" style="width:16px;height:16px;cursor:pointer">
+        <label for="act-is-sensitive" style="margin:0;cursor:pointer;font-size:13px;color:var(--text)">Marcar observação como tópico sensível (aparece na tela inicial)</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-accent" onclick="saveActivity()" style="flex:1">Salvar atividade</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-activity').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TÓPICO SENSÍVEL AVULSO -->
+<div class="modal-overlay" id="modal-sensitive" onclick="closeSensitiveModal(event)">
+  <div class="modal">
+    <div class="modal-title">🚨 Adicionar tópico sensível</div>
+    <div class="gap12">
+      <div class="form-group">
+        <label>Disciplina</label>
+        <select id="sens-disc">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descrição do tópico sensível</label>
+        <textarea id="sens-obs" rows="3" placeholder="Descreva o ponto de dificuldade..." style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-accent" onclick="saveSensitiveTopic()" style="flex:1">Adicionar</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-sensitive').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: COMPROMISSO EXTRA -->
+<div class="modal-overlay" id="modal-extra" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-title">📌 Compromisso extra</div>
+    <div class="gap12">
+      <div class="form-group">
+        <label>Descrição</label>
+        <input type="text" id="extra-desc" placeholder="Ex: Reunião, consulta médica...">
+      </div>
+      <div class="flex-row">
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="extra-date">
+        </div>
+        <div class="form-group">
+          <label>Horário</label>
+          <input type="time" id="extra-time">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-accent" onclick="saveExtra()" style="flex:1">Salvar</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-extra').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: HÁBITO DO DIA -->
+<div class="modal-overlay" id="modal-habit" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-title" id="habit-modal-title">Marcar hábitos</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--bg3);border-radius:8px;margin:0">
+        <input type="checkbox" id="habit-check-estudar" style="width:18px;height:18px;accent-color:var(--accent)">
+        <span style="font-size:14px">📚 Estudar</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--bg3);border-radius:8px;margin:0">
+        <input type="checkbox" id="habit-check-academia" style="width:18px;height:18px;accent-color:var(--blue)">
+        <span style="font-size:14px">🏋️ Academia</span>
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-accent" onclick="saveHabit()" style="flex:1">Salvar</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-habit').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BLOCO DE NOTAS ===== -->
+<div class="page" id="page-notas">
+
+<h2 style="font-family:var(--font-title);font-size:18px;font-weight:700;margin-bottom:20px">📓 Bloco de Notas</h2>
+
+<table style="width:100%;border-collapse:collapse;table-layout:fixed">
+<tr style="vertical-align:top">
+
+<td style="width:50%;padding-right:12px">
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">Nova anotação</div>
+    <div class="gap12">
+      <div class="form-group">
+        <label>Título</label>
+        <input type="text" id="note-title" placeholder="Ex: Dolo eventual — ponto importante">
+      </div>
+      <div class="form-group">
+        <label>Disciplina (opcional)</label>
+        <select id="note-disc"><option value="">Geral</option></select>
+      </div>
+      <div class="form-group">
+        <label>Anotação</label>
+        <textarea id="note-body" rows="5" placeholder="Escreva sua nota aqui..." style="resize:vertical"></textarea>
+      </div>
+      <div style="text-align:right">
+        <button class="btn btn-accent" onclick="saveNote()" style="padding:9px 28px">Salvar nota</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <input type="text" id="note-search" placeholder="🔍 Buscar nas notas..." oninput="renderNotesList()" style="flex:1">
+  </div>
+  <div id="notes-filter" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
+
+  <div id="notes-list" style="display:none;grid-template-columns:repeat(2,1fr);gap:12px"></div>
+  <div id="notes-empty" style="display:none;padding:40px 0;text-align:center;color:var(--text3);font-size:13px">
+    Nenhuma nota ainda. Escreva sua primeira anotação acima! ✏️
+  </div>
+
+</td>
+
+<td style="width:50%;padding-left:12px">
+  <div class="card" style="border-color:rgba(232,200,74,0.2);background:rgba(232,200,74,0.03)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <span style="font-size:20px">💡</span>
+      <span style="font-family:var(--font-title);font-size:15px;font-weight:700;color:var(--accent)">Instruções de uso</span>
+    </div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.8">
+      <p style="color:var(--text3);font-style:italic;margin-bottom:14px">
+        Em breve você vai preencher esse espaço com as instruções de uso do seu dashboard!
+      </p>
+      <div style="height:1px;background:var(--border);margin-bottom:14px"></div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Dicas rápidas</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:8px"><span style="color:var(--accent)">→</span><span>Use o campo <strong>Disciplina</strong> para filtrar as notas por matéria</span></div>
+        <div style="display:flex;gap:8px"><span style="color:var(--accent)">→</span><span>A <strong>busca</strong> encontra texto no título e no conteúdo</span></div>
+        <div style="display:flex;gap:8px"><span style="color:var(--accent)">→</span><span>Clique no <strong>✕</strong> do post-it para excluir uma nota</span></div>
+        <div style="display:flex;gap:8px"><span style="color:var(--accent)">→</span><span>As notas ficam salvas no navegador automaticamente</span></div>
+      </div>
+    </div>
+  </div>
+</td>
+
+</tr>
+</table>
+
+</div>
+
+</main>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay" id="modal-confirm" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">Confirmar exclusão</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px" id="confirm-msg">Tem certeza que deseja excluir este registro?</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1;color:var(--red);border-color:rgba(248,113,113,.3)" id="confirm-yes-btn">Excluir</button>
+      <button class="btn btn-accent" style="flex:1" onclick="document.getElementById('modal-confirm').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY POPUP -->
+<div class="day-popup" id="day-popup" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="day-popup-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-family:var(--font-title);font-size:16px;font-weight:700" id="popup-date-title"></div>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="document.getElementById('day-popup').classList.remove('open')">✕ Fechar</button>
+    </div>
+    <div id="popup-content"></div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const DISCIPLINES = [
+  {
+    id: 'port',
+    name: 'Língua Portuguesa',
+    icon: '📝',
+    color: '#60a5fa',
+    peso: 15,
+    temas: [
+      { id: 'leitura_assunto', nome: '1.1 Assunto do texto', critico: true },
+      { id: 'leitura_estrutura', nome: '1.2 Estruturação do texto', critico: true },
+      { id: 'leitura_ideias', nome: '1.3 Ideias principais e secundárias', critico: true },
+      { id: 'leitura_relacao', nome: '1.4 Relação entre as ideias', critico: true },
+      { id: 'leitura_efeitos', nome: '1.5 Efeitos de sentido', critico: false },
+      { id: 'leitura_figuras', nome: '1.6 Figuras de linguagem', critico: true },
+      { id: 'leitura_argumentacao', nome: '1.7 Recursos de argumentação', critico: true },
+      { id: 'leitura_implicitas', nome: '1.8 Informações implícitas: pressupostos e subentendidos', critico: true },
+      { id: 'leitura_coesao', nome: '1.9 Coesão e coerência textuais', critico: true },
+      { id: 'lexico_significacao', nome: '2.1 Significação de palavras e expressões no texto', critico: true },
+      { id: 'lexico_substituicao', nome: '2.2 Substituição de palavras e expressões no texto', critico: false },
+      { id: 'lexico_formacao', nome: '2.3 Estrutura e formação de palavras', critico: false },
+      { id: 'ling_morfossintaxe', nome: '3.1 Relações morfossintáticas', critico: true },
+      { id: 'ling_ortografia', nome: '3.2 Ortografia e acentuação gráfica (Acordo Ortográfico)', critico: true },
+      { id: 'ling_fonemas', nome: '3.3 Relações entre fonemas e grafias', critico: false },
+      { id: 'ling_classes', nome: '3.4 Flexões e emprego de classes gramaticais', critico: true },
+      { id: 'ling_vozes', nome: '3.5 Vozes verbais e sua conversão', critico: false },
+      { id: 'ling_concordancia', nome: '3.6 Concordância nominal e verbal', critico: true },
+      { id: 'ling_regencia', nome: '3.7 Regência nominal e verbal (inclusive crase)', critico: true },
+      { id: 'ling_coordenacao', nome: '3.8 Coordenação e subordinação: conjunções, locuções e pronomes relativos', critico: true },
+      { id: 'ling_pontuacao', nome: '3.9 Pontuação', critico: true },
+    ]
+  },
+  {
+    id: 'info',
+    name: 'Informática',
+    icon: '💻',
+    color: '#38bdf8',
+    peso: 10,
+    temas: [
+      { id: 'win_area', nome: 'Windows 10 — Área de Trabalho e Menu Iniciar', critico: true },
+      { id: 'win_barra', nome: 'Windows 10 — Barra de Tarefas e Gerenciador de Tarefas', critico: true },
+      { id: 'win_janelas', nome: 'Windows 10 — Janelas, Painel de Controle e Lixeira', critico: true },
+      { id: 'win_arquivos', nome: 'Windows 10 — Bibliotecas, Arquivos, Pastas, Ícones e Atalhos', critico: true },
+      { id: 'win_nomes', nome: 'Windows 10 — Nomes válidos para arquivos e pastas', critico: false },
+      { id: 'word_ambiente', nome: 'Word 2016 — Ambiente e componentes do programa', critico: true },
+      { id: 'word_documentos', nome: 'Word 2016 — Criação, formatação e salvamento de documentos', critico: true },
+      { id: 'word_barra', nome: 'Word 2016 — Barra de ferramentas: guias Início, Inserir, Layout, Referências, Revisão, Exibição', critico: true },
+      { id: 'excel_ambiente', nome: 'Excel 2016 — Ambiente e componentes do programa', critico: true },
+      { id: 'excel_elementos', nome: 'Excel 2016 — Célula, planilha e pasta de trabalho', critico: true },
+      { id: 'excel_planilhas', nome: 'Excel 2016 — Formatação, fórmulas e funções', critico: true },
+      { id: 'excel_barra', nome: 'Excel 2016 — Barra de ferramentas: guias Início, Inserir, Fórmulas, Dados, Revisão', critico: true },
+      { id: 'excel_formulas', nome: 'Excel 2016 — Significado e resultado de fórmulas', critico: true },
+      { id: 'chrome', nome: 'Google Chrome — Ambiente e funcionalidades', critico: true },
+      { id: 'firefox', nome: 'Mozilla Firefox — Ambiente e funcionalidades', critico: false },
+      { id: 'ie', nome: 'Internet Explorer 11 — Funcionalidades, menus e atalhos', critico: false },
+      { id: 'outlook_express', nome: 'Outlook Express — E-mail, anexos, organização e atalhos', critico: false },
+      { id: 'outlook_2016', nome: 'Microsoft Outlook 2016 — E-mail, anexos, organização e atalhos', critico: true },
+      { id: 'gmail', nome: 'Gmail — Funcionamento, menus e funcionalidades', critico: true },
+    ]
+  },
+  {
+    id: 'penal',
+    name: 'Direito Penal',
+    icon: '⚖️',
+    color: '#f87171',
+    peso: 12,
+    temas: [
+      { id: 'cp_aplicacao', nome: 'Código Penal — Aplicação da Lei Penal', critico: true },
+      { id: 'cp_imputabilidade', nome: 'Código Penal — Imputabilidade Penal', critico: true },
+      { id: 'cp_concurso', nome: 'Código Penal — Concurso de Pessoas', critico: true },
+      { id: 'cp_penas', nome: 'Código Penal — Das Penas', critico: true },
+      { id: 'cp_seguranca', nome: 'Código Penal — Medidas de Segurança', critico: false },
+      { id: 'cp_acao', nome: 'Código Penal — Ação Penal e Extinção da Punibilidade', critico: true },
+      { id: 'cp_pessoa', nome: 'Código Penal — Crimes contra a Pessoa', critico: true },
+      { id: 'cp_patrimonio', nome: 'Código Penal — Crimes contra o Patrimônio', critico: true },
+      { id: 'cp_sexual', nome: 'Código Penal — Crimes contra a Dignidade Sexual', critico: true },
+      { id: 'cp_paz', nome: 'Código Penal — Crimes contra a Paz Pública', critico: false },
+      { id: 'cp_fe', nome: 'Código Penal — Crimes contra a Fé Pública', critico: false },
+      { id: 'cp_adm', nome: 'Código Penal — Crimes contra a Administração Pública', critico: true },
+      { id: 'lei_hediondos', nome: 'Lei 8.072/1990 e alterações — Crimes Hediondos', critico: true },
+      { id: 'lei_tortura', nome: 'Lei 9.455/1997 — Crimes de Tortura', critico: true },
+      { id: 'lei_drogas', nome: 'Lei 11.343/2006 — Lei de Drogas (SISNAD)', critico: true },
+      { id: 'lei_armas', nome: 'Lei 10.826/2003 — Estatuto do Desarmamento', critico: false },
+    ]
+  },
+  {
+    id: 'proc',
+    name: 'Processo Penal',
+    icon: '🔍',
+    color: '#fb923c',
+    peso: 8,
+    temas: [
+      { id: 'cpp_prisao', nome: 'CPP — Prisão e Liberdade Provisória (Lei 12.403/2011)', critico: true },
+      { id: 'lei_temporaria', nome: 'Lei 7.960/1989 — Prisão Temporária', critico: true },
+    ]
+  },
+  {
+    id: 'exec',
+    name: 'Execução Penal',
+    icon: '🔒',
+    color: '#4ade80',
+    peso: 15,
+    temas: [
+      { id: 'lep_principios', nome: 'LEP 7.210/84 — Princípios e finalidade da execução penal', critico: true },
+      { id: 'lep_orgaos', nome: 'LEP 7.210/84 — Órgãos da execução penal', critico: true },
+      { id: 'lep_preso', nome: 'LEP 7.210/84 — Direitos e deveres do preso', critico: true },
+      { id: 'lep_estabelecimentos', nome: 'LEP 7.210/84 — Estabelecimentos penais (tipos e funções)', critico: true },
+      { id: 'lep_classificacao', nome: 'LEP 7.210/84 — Classificação e individualização da pena', critico: true },
+      { id: 'lep_trabalho', nome: 'LEP 7.210/84 — Trabalho e remição de pena', critico: true },
+      { id: 'lep_assistencia', nome: 'LEP 7.210/84 — Assistência ao preso (saúde, educação, social)', critico: true },
+      { id: 'lep_disciplina', nome: 'LEP 7.210/84 — Disciplina e infrações disciplinares', critico: true },
+      { id: 'lep_beneficios', nome: 'LEP 7.210/84 — Progressão de regime, livramento condicional e outros benefícios', critico: true },
+      { id: 'lep_incidentes', nome: 'LEP 7.210/84 — Incidentes de execução', critico: false },
+      { id: 'lep_jurisdicao', nome: 'LEP 7.210/84 — Juízo da execução penal', critico: false },
+      { id: 'regimento_rs', nome: 'Dec. 46.534/2009 — Regimento Disciplinar Penitenciário RS', critico: true },
+      { id: 'res14', nome: 'Resolução 14/94 — Regras Mínimas para Tratamento do Preso no Brasil', critico: true },
+    ]
+  },
+  {
+    id: 'const',
+    name: 'Direito Constitucional',
+    icon: '📜',
+    color: '#2dd4bf',
+    peso: 15,
+    temas: [
+      { id: 'cf_principios', nome: 'CF/88 — Princípios Fundamentais (arts. 1º a 4º)', critico: true },
+      { id: 'cf_direitos', nome: 'CF/88 — Direitos e Garantias Fundamentais (arts. 5º a 17)', critico: true },
+      { id: 'cf_uniao', nome: 'CF/88 — Organização do Estado: União (arts. 21 a 24)', critico: true },
+      { id: 'cf_estados', nome: 'CF/88 — Estados Federados (arts. 25 a 28)', critico: false },
+      { id: 'cf_adm', nome: 'CF/88 — Administração Pública (arts. 37 a 41)', critico: true },
+      { id: 'cf_judiciario', nome: 'CF/88 — Poder Judiciário — Disposições Gerais (arts. 92 a 100)', critico: false },
+      { id: 'cf_mp', nome: 'CF/88 — Ministério Público (arts. 127 a 129)', critico: true },
+      { id: 'cf_advocacia', nome: 'CF/88 — Advocacia Pública e Defensoria (arts. 131 a 134)', critico: false },
+      { id: 'cf_seguranca', nome: 'CF/88 — Segurança Pública (art. 144)', critico: true },
+      { id: 'ce_principios', nome: 'CE/RS — Princípios Fundamentais (arts. 1º e 2º)', critico: true },
+      { id: 'ce_adm', nome: 'CE/RS — Administração Pública (arts. 19 a 27)', critico: true },
+      { id: 'ce_servidores', nome: 'CE/RS — Servidores Públicos Civis (arts. 29 a 45)', critico: true },
+      { id: 'ce_seguranca', nome: 'CE/RS — Segurança Pública e Política Penitenciária (arts. 124 a 139)', critico: true },
+      { id: 'ce_poderes', nome: 'CE/RS — Organização dos Poderes (arts. 49 a 115)', critico: false },
+    ]
+  },
+  {
+    id: 'adm',
+    name: 'Direito Administrativo',
+    icon: '🏛️',
+    color: '#a78bfa',
+    peso: 10,
+    temas: [
+      { id: 'improbidade', nome: 'Lei 8.429/1992 — Improbidade Administrativa', critico: true },
+      { id: 'licitacao', nome: 'Lei 14.133/2021 — Licitações e Contratos Administrativos', critico: true },
+      { id: 'estatuto_rs', nome: 'Lei 10.098/1994 — Estatuto dos Servidores Públicos Civis do RS', critico: true },
+      { id: 'estatuto_rs_prov', nome: 'Estatuto RS — Provimento, nomeação, posse e exercício (arts. 10 a 27)', critico: true },
+      { id: 'estatuto_rs_estagio', nome: 'Estatuto RS — Estágio probatório e estabilidade (arts. 28 a 31)', critico: true },
+      { id: 'estatuto_rs_ferias', nome: 'Estatuto RS — Regime de trabalho, férias e vencimentos (arts. 32 a 84)', critico: true },
+      { id: 'estatuto_rs_deveres', nome: 'Estatuto RS — Deveres, proibições e responsabilidades (arts. 177 a 186)', critico: true },
+      { id: 'estatuto_rs_pad', nome: 'Estatuto RS — Processo Administrativo Disciplinar e Sindicância (arts. 187 a 225)', critico: true },
+      { id: 'lei_13259', nome: 'Lei Estadual 13.259/2009 — Quadro Especial de Servidores Penitenciários RS (SUSEPE)', critico: true },
+      { id: 'dec_48598', nome: 'Dec. Estadual 48.598/2011 — Gênero, raça e etnia em concursos públicos RS', critico: false },
+    ]
+  },
+  {
+    id: 'legis',
+    name: 'Legislação Especial',
+    icon: '📋',
+    color: '#fb923c',
+    peso: 10,
+    temas: [
+      { id: 'maria_penha', nome: 'Lei 11.340/2006 — Lei Maria da Penha', critico: true },
+      { id: 'igualdade_racial', nome: 'Lei 12.288/2010 — Estatuto Nacional da Igualdade Racial', critico: true },
+      { id: 'igualdade_rs', nome: 'Lei Estadual 13.694/2011 — Estatuto Estadual da Igualdade Racial RS', critico: false },
+      { id: 'eca', nome: 'Lei 8.069/1990 — Estatuto da Criança e do Adolescente (ECA)', critico: true },
+      { id: 'deficiencia', nome: 'Lei 7.853/1989 — Apoio às Pessoas com Deficiência', critico: false },
+      { id: 'saude_mental', nome: 'Lei 10.216/2001 — Proteção das Pessoas com Transtornos Mentais', critico: false },
+      { id: 'idoso', nome: 'Lei 10.741/2003 — Estatuto do Idoso', critico: true },
+      { id: 'dudh', nome: 'Declaração Universal dos Direitos Humanos (1948)', critico: true },
+      { id: 'pacto_sjcr', nome: 'Dec. 678/1992 — Convenção Americana sobre Direitos Humanos (Pacto de São José)', critico: true },
+    ]
+  },
+  {
+    id: 'logica',
+    name: 'Raciocínio Lógico',
+    icon: '🧠',
+    color: '#e879f9',
+    peso: 10,
+    temas: [
+      { id: 'estrutura', nome: '1. Estrutura lógica de relações e diagramas lógicos', critico: true },
+      { id: 'proposicoes', nome: '2. Proposições e conectivos (simples e compostas)', critico: true },
+      { id: 'operacoes', nome: '2. Operações lógicas: negação, conjunção, disjunção, condicional, bicondicional', critico: true },
+      { id: 'tabelas', nome: '3. Tabelas-verdade, tautologias, contradições e contingências', critico: true },
+      { id: 'implicacao', nome: '3. Implicação lógica, equivalência lógica e Leis de De Morgan', critico: true },
+      { id: 'deducao', nome: '3. Argumentação e dedução lógica', critico: true },
+      { id: 'sentencas', nome: '4. Sentenças abertas e quantificadores (universal e existencial)', critico: true },
+      { id: 'argumentos', nome: '5. Argumentos Lógicos Dedutivos e Argumentos Categóricos', critico: true },
+    ]
+  },
+  {
+    id: 'atual',
+    name: 'Atualidades e Geografia RS',
+    icon: '🗺️',
+    color: '#f59e0b',
+    peso: 5,
+    temas: [
+      { id: 'geo_org', nome: 'Organização política e territorial do RS', critico: true },
+      { id: 'geo_div', nome: 'Divisão política, regiões administrativas e regionalização IBGE', critico: true },
+      { id: 'geo_hierarquia', nome: 'Hierarquia urbana do RS', critico: false },
+      { id: 'geo_simbolos', nome: 'Símbolos, estrutura dos poderes do RS', critico: false },
+      { id: 'geo_fauna', nome: 'Fauna e flora locais do RS', critico: false },
+      { id: 'geo_hidrografia', nome: 'Hidrografia e relevo do RS', critico: true },
+      { id: 'geo_economia', nome: 'Matriz produtiva, energética e de transporte do RS', critico: false },
+      { id: 'geo_conservacao', nome: 'Unidades de conservação do RS', critico: false },
+      { id: 'geo_historia', nome: 'História e cultura do RS', critico: true },
+      { id: 'atual_nacional', nome: 'Atualidades — Tópicos nacionais (segurança, política, economia, saúde, educação)', critico: true },
+      { id: 'atual_internacional', nome: 'Atualidades — Tópicos internacionais', critico: false },
+      { id: 'atual_rs', nome: 'Atualidades — Tópicos estaduais e locais do RS', critico: true },
+      { id: 'atual_tecnologia', nome: 'Atualidades — Tecnologia, meio ambiente e desenvolvimento sustentável', critico: false },
+    ]
+  },
+];
+
+// ===================== STATE =====================
+let state = JSON.parse(localStorage.getItem('ppenal_state') || 'null') || {};
+// Migrate / ensure all fields exist
+if (!state.studied) state.studied = {};
+if (!state.questions) state.questions = [];
+if (!state.pomSessions) state.pomSessions = [];
+if (!state.activities) state.activities = [];
+if (!state.sensitiveTopics) state.sensitiveTopics = [];
+if (!state.extras) state.extras = [];
+if (!state.habits) state.habits = {};
+if (!state.cycleTasksDone) state.cycleTasksDone = {};
+if (!state.cycleAssigned) state.cycleAssigned = {}; // {dateKey_slotIndex: {discId, topicId}}
+if (!state.cycleDiscs) state.cycleDiscs = null; // null = all disciplines
+if (!state.notes) state.notes = [];
+if (!state.streak) state.streak = 1;
+if (!state.lastVisit) state.lastVisit = new Date().toDateString();
+
+function saveState() {
+  localStorage.setItem('ppenal_state', JSON.stringify(state));
+}
+
+// Streak check
+const today = new Date().toDateString();
+if (state.lastVisit !== today) {
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (state.lastVisit === yesterday) state.streak = (state.streak||0) + 1;
+  else state.streak = 1;
+  state.lastVisit = today;
+  saveState();
+}
+document.getElementById('streakCount').textContent = state.streak;
+
+// ===================== NAVIGATION =====================
+let currentPage = 'home';
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'"+id+"'")) t.classList.add('active');
+  });
+  currentPage = id;
+  if (id === 'home') renderHome();
+  else if (id === 'jornada') renderJornada();
+  else if (id === 'disciplinas') renderDisciplinasPage();
+  else if (id === 'questoes') renderQuestoes();
+  else if (id === 'ciclo') renderCiclePage();
+  else if (id === 'agenda') renderAgendaPage();
+  else if (id === 'sensiveis') renderSensitivePage();
+  else if (id === 'notas') renderNotasPage();
+}
+
+// ===================== HOME =====================
+function renderHome() {
+  lockTodaySlots();
+  renderFrase();
+  renderMetrics();
+  renderAgenda();
+  renderRevisions();
+  renderCritical();
+  renderWeekChart();
+  renderSensitiveTopics();
+  renderActivityLog();
+}
+
+function getScoreByDisc() {
+  const map = {};
+  DISCIPLINES.forEach(d => { map[d.id] = {total: 0, hits: 0}; });
+  state.questions.forEach(q => {
+    if (map[q.discId]) {
+      map[q.discId].total += q.total;
+      map[q.discId].hits += q.hits;
+    }
+  });
+  return map;
+}
+
+function renderMetrics() {
+  const todayQs = state.questions.filter(q => q.date === today);
+  const totalToday = todayQs.reduce((a,b) => a + b.total, 0);
+  const hitsToday = todayQs.reduce((a,b) => a + b.hits, 0);
+  document.getElementById('home-acertos').textContent = totalToday > 0 ? hitsToday + '/' + totalToday : '—';
+  document.getElementById('home-acertos-sub').textContent = totalToday > 0 ? Math.round(hitsToday/totalToday*100) + '% de acertos hoje' : 'Nenhuma questão hoje';
+
+  const allTotal = state.questions.reduce((a,b) => a + b.total, 0);
+  const allHits = state.questions.reduce((a,b) => a + b.hits, 0);
+  document.getElementById('home-score').textContent = allTotal > 0 ? Math.round(allHits/allTotal*100) + '%' : '—%';
+  document.getElementById('home-total-q').textContent = allTotal;
+
+  let studied = 0, totalTopics = 0;
+  DISCIPLINES.forEach(d => {
+    d.temas.forEach(t => {
+      totalTopics++;
+      if (state.studied[d.id+'_'+t.id]?.done) studied++;
+    });
+  });
+  document.getElementById('home-studied').textContent = studied;
+  document.getElementById('home-studied-sub').textContent = 'de ' + totalTopics + ' assuntos';
+}
+
+// ===================== STUDY CYCLE ENGINE =====================
+// Fixed discipline rotation order (user-defined priority sequence)
+const CYCLE_ORDER = [
+  'port',    // 1. Português
+  'const',   // 2. Constitucional
+  'logica',  // 3. Lógico
+  'penal',   // 4. Penal
+  'proc',    // 5. Processual
+  'port',    // 6. Português (2ª vez)
+  'info',    // 7. Informática
+  'legis',   // 8. Especial
+  'logica',  // 9. Lógico (2ª vez)
+  'atual',   // 10. RS
+  'adm',     // 11. Administrativo
+  'exec',    // 12. Execução Penal
+];
+
+// Returns flat list of topics following the CYCLE_ORDER
+// A topic is LOCKED if it has no registered questions yet (teoria must precede questões)
+// A topic repeats in the cycle until the user registers questions for it
+function getAllTopicsOrdered() {
+  const list = [];
+  // Build a pool of topics per discipline in CYCLE_ORDER
+  // Each cycle position = one discipline slot → picks the next pending topic of that disc
+  CYCLE_ORDER.forEach((discId, cyclePos) => {
+    const disc = DISCIPLINES.find(d => d.id === discId);
+    if (!disc) return;
+    disc.temas.forEach(tema => {
+      list.push({
+        discId: disc.id,
+        topicId: tema.id,
+        discName: disc.name,
+        topicName: tema.nome,
+        discColor: disc.color,
+        discIcon: disc.icon,
+        critico: tema.critico,
+        cyclePos,
+      });
+    });
+  });
+  return list;
+}
+
+// Get the next pending topic for a given discId
+// A topic is considered COMPLETE if:
+//   - the ✓ checkbox was manually checked in the Disciplinas tab, OR
+//   - at least one question was registered for it
+function getNextPendingTopic(discId) {
+  const disc = DISCIPLINES.find(d => d.id === discId);
+  if (!disc) return null;
+
+  for (const tema of disc.temas) {
+    const k = discId + '_' + tema.id;
+    const s = state.studied[k] || {};
+    const checkedDone = !!s.done;
+    const hasQuestions = state.questions.some(q => q.discId === discId && q.topicId === tema.id);
+
+    // Topic is complete if manually checked OR has questions registered
+    if (!checkedDone && !hasQuestions) {
+      const teoriaOk = s.statusTeoria || s.done;
+      return {
+        discId: disc.id,
+        topicId: tema.id,
+        discName: disc.name,
+        topicName: tema.nome,
+        discColor: disc.color,
+        discIcon: disc.icon,
+        critico: tema.critico,
+        teoriaOk,
+        hasQuestions: false,
+        needsTeoria: !teoriaOk,
+        needsQuestions: teoriaOk && !hasQuestions,
+      };
+    }
+  }
+
+  // All topics complete — cycle back to first for revision
+  const tema = disc.temas[0];
+  return {
+    discId: disc.id,
+    topicId: tema.id,
+    discName: disc.name,
+    topicName: tema.nome,
+    discColor: disc.color,
+    discIcon: disc.icon,
+    critico: tema.critico,
+    allDone: true,
+  };
+}
+
+function getAvailableHours(dow) {
+  if (dow === 0 || dow === 6) return 3;
+  return 3;
+}
+
+function getTimeSlots(dow) {
+  if (dow === 0 || dow === 6) {
+    return ['18:00–19:00','19:00–20:00','20:00–21:00'];
+  }
+  return ['08:00–09:00','09:00–10:00','10:00–10:30 + 21:00–22:00'];
+}
+
+function getDateKey(date) {
+  return date.toISOString().split('T')[0];
+}
+
+// Ensures today's cycle slots are locked in state.cycleAssigned
+// so they never change after being seen for the first time.
+function lockTodaySlots() {
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+  const todayKey = getDateKey(todayDate);
+
+  // Calculate cyclePointer for today
+  const epoch = new Date('2025-01-01'); epoch.setHours(0,0,0,0);
+  let cyclePointer = 0;
+  let cursor = new Date(epoch);
+  while (cursor.getTime() < todayDate.getTime()) {
+    cyclePointer = (cyclePointer + getAvailableHours(cursor.getDay())) % CYCLE_ORDER.length;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  const slots = getAvailableHours(todayDate.getDay());
+  for (let s = 0; s < slots; s++) {
+    const slotKey = todayKey + '_slot' + s;
+    if (!state.cycleAssigned[slotKey]) {
+      // Not yet assigned — assign now based on current pending topic
+      const discId = CYCLE_ORDER[(cyclePointer + s) % CYCLE_ORDER.length];
+      const topic = getNextPendingTopic(discId);
+      if (topic) {
+        state.cycleAssigned[slotKey] = { discId: topic.discId, topicId: topic.topicId };
+      }
+    }
+  }
+  saveState();
+}
+
+// Builds the daily slot list for a given date range
+// For today and past days: uses locked assignments from state.cycleAssigned
+// For future days: uses getNextPendingTopic dynamically
+function buildCycle(startDate, numDays) {
+  const result = {};
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+  const todayKey = getDateKey(todayDate);
+
+  // Calculate cyclePointer for startDate
+  const epoch = new Date('2025-01-01'); epoch.setHours(0,0,0,0);
+  let cyclePointer = 0;
+  let cursor = new Date(epoch);
+  const startTs = startDate.getTime();
+  while (cursor.getTime() < startTs) {
+    cyclePointer = (cyclePointer + getAvailableHours(cursor.getDay())) % CYCLE_ORDER.length;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  for (let i = 0; i < numDays; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    const dow = date.getDay();
+    const slots = getAvailableHours(dow);
+    const timeSlots = getTimeSlots(dow);
+    const dateKey = getDateKey(date);
+    const isTodayOrPast = date.getTime() <= todayDate.getTime();
+    result[dateKey] = [];
+
+    for (let s = 0; s < slots; s++) {
+      const slotKey = dateKey + '_slot' + s;
+      const discIdFromOrder = CYCLE_ORDER[cyclePointer % CYCLE_ORDER.length];
+      let discId, topicId;
+
+      if (isTodayOrPast && state.cycleAssigned[slotKey]) {
+        // Use locked assignment — never changes after first view
+        discId = state.cycleAssigned[slotKey].discId;
+        topicId = state.cycleAssigned[slotKey].topicId;
+      } else if (!isTodayOrPast) {
+        // Future day — calculate dynamically
+        const topic = getNextPendingTopic(discIdFromOrder);
+        if (topic) { discId = topic.discId; topicId = topic.topicId; }
+      } else {
+        // Today but not yet locked (shouldn't happen after lockTodaySlots, but fallback)
+        const topic = getNextPendingTopic(discIdFromOrder);
+        if (topic) { discId = topic.discId; topicId = topic.topicId; }
+      }
+
+      if (discId && topicId) {
+        const disc = DISCIPLINES.find(d => d.id === discId);
+        const tema = disc?.temas.find(t => t.id === topicId);
+        if (disc && tema) {
+          const taskKey = dateKey + '_' + discId + '_' + topicId;
+          const hasQuestions = state.questions.some(q => q.discId === discId && q.topicId === topicId);
+          const s_studied = state.studied[discId+'_'+topicId] || {};
+          const teoriaOk = s_studied.statusTeoria || s_studied.done;
+          result[dateKey].push({
+            discId, topicId,
+            discName: disc.name,
+            topicName: tema.nome,
+            discColor: disc.color,
+            discIcon: disc.icon,
+            critico: tema.critico,
+            teoriaOk,
+            hasQuestions,
+            needsTeoria: !teoriaOk,
+            needsQuestions: teoriaOk && !hasQuestions,
+            timeSlot: timeSlots[s] || timeSlots[timeSlots.length-1],
+            done: !!state.cycleTasksDone[taskKey],
+            taskKey,
+          });
+        }
+      }
+      cyclePointer = (cyclePointer + 1) % CYCLE_ORDER.length;
+    }
+
+    // Carry forward incomplete tasks from previous day
+    if (i > 0) {
+      const prevDate = new Date(startDate);
+      prevDate.setDate(startDate.getDate() + i - 1);
+      const prevKey = getDateKey(prevDate);
+      const prevTasks = result[prevKey] || [];
+      prevTasks.forEach(pt => {
+        if (!pt.done) {
+          result[dateKey].push({ ...pt, timeSlot: '↩ Transferida', carried: true });
+        }
+      });
+    }
+  }
+  return result;
+}
+
+// When user checks a task: if topic needs questions, open register modal pre-filled
+// Otherwise just mark done
+function toggleCycleTask(taskKey, discId, topicId) {
+  const alreadyDone = !!state.cycleTasksDone[taskKey];
+  if (alreadyDone) {
+    delete state.cycleTasksDone[taskKey];
+    saveState();
+    renderAgenda();
+    if (currentPage === 'ciclo') renderCiclePage();
+    if (currentPage === 'agenda') renderAgendaPage();
+    return;
+  }
+
+  // Always mark done immediately when checkbox is ticked
+  state.cycleTasksDone[taskKey] = true;
+  saveState();
+
+  // If topic has no questions yet, open modal to encourage registration (but don't block)
+  const hasQuestions = state.questions.some(q => q.discId === discId && q.topicId === topicId);
+  if (!hasQuestions) {
+    pendingTaskKey = taskKey;
+    pendingTaskDiscId = discId;
+    pendingTaskTopicId = topicId;
+    openActivityModalPrefilled(discId, topicId);
+  }
+
+  renderAgenda();
+  if (currentPage === 'ciclo') renderCiclePage();
+  if (currentPage === 'agenda') renderAgendaPage();
+}
+
+let pendingTaskKey = null;
+let pendingTaskDiscId = null;
+let pendingTaskTopicId = null;
+
+function openActivityModalPrefilled(discId, topicId) {
+  // Open the activity modal pre-filled with disc and topic
+  openActivityModal();
+  setTimeout(() => {
+    const discSel = document.getElementById('act-disc');
+    if (discSel) {
+      discSel.value = discId;
+      updateActTopic();
+      setTimeout(() => {
+        const topicSel = document.getElementById('act-topic');
+        if (topicSel) topicSel.value = topicId;
+      }, 50);
+    }
+    // Show a hint
+    const hint = document.createElement('div');
+    hint.id = 'act-modal-hint';
+    hint.style.cssText = 'padding:10px 14px;background:rgba(232,200,74,0.1);border:1px solid rgba(232,200,74,0.25);border-radius:8px;font-size:12px;color:var(--accent);margin-bottom:4px';
+    hint.innerHTML = '💡 Registre as questões realizadas para concluir esta atividade do ciclo.';
+    const modal = document.querySelector('#modal-activity .gap12');
+    if (modal && !document.getElementById('act-modal-hint')) modal.insertBefore(hint, modal.firstChild);
+  }, 100);
+}
+
+// ===================== HOME AGENDA (cycle-based) =====================
+function renderAgenda() {
+  const dow = new Date().getDay();
+  const todayDate = new Date();
+  todayDate.setHours(0,0,0,0);
+  const dateKey = getDateKey(todayDate);
+  const cycle = buildCycle(todayDate, 2);
+  const todayTasks = cycle[dateKey] || [];
+
+  const container = document.getElementById('agenda-list');
+  const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const isWeekend = (dow===0||dow===6);
+  const doneCount = todayTasks.filter(t=>t.done).length;
+
+  container.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="font-size:12px;color:var(--text3)">${days[dow]} · ${isWeekend?'18–21h':'08–10:30 + 21–22h'}</div>
+    <div style="font-size:12px;color:var(--text2)">${doneCount}/${todayTasks.length} concluídas</div>
+  </div>`;
+
+  if (todayTasks.length === 0) {
+    container.innerHTML += '<div style="color:var(--text2);font-size:13px">Nenhuma atividade programada.</div>';
+    return;
+  }
+
+  todayTasks.forEach(task => {
+    const div = document.createElement('div');
+    div.className = 'cycle-task' + (task.done ? ' done-task' : '');
+
+    // Status indicator
+    let statusBadge = '';
+    if (!task.done) {
+      if (task.needsQuestions) {
+        statusBadge = `<span style="font-size:10px;color:var(--orange);background:rgba(251,146,60,0.12);padding:2px 7px;border-radius:99px;border:1px solid rgba(251,146,60,0.25);white-space:nowrap">📝 Faltam questões</span>`;
+      } else if (task.needsTeoria) {
+        statusBadge = `<span style="font-size:10px;color:var(--blue);background:rgba(96,165,250,0.12);padding:2px 7px;border-radius:99px;border:1px solid rgba(96,165,250,0.25);white-space:nowrap">📖 Iniciar teoria</span>`;
+      }
+    }
+
+    div.innerHTML = `
+      <input type="checkbox" data-taskkey="${task.taskKey}" ${task.done?'checked':''}
+        onchange="toggleCycleTask('${task.taskKey}','${task.discId}','${task.topicId}')">
+      <div style="width:3px;border-radius:99px;align-self:stretch;background:${task.discColor};min-height:20px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div class="task-label" style="font-size:13px;font-weight:500;${task.done?'text-decoration:line-through;color:var(--text3)':''}">
+          ${task.discIcon} ${task.discName}
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:1px;${task.done?'text-decoration:line-through;':''}">
+          ${task.topicName}${task.carried?'  <span style="color:var(--orange);font-size:10px">↩ transferida</span>':''}
+        </div>
+        ${statusBadge ? `<div style="margin-top:4px">${statusBadge}</div>` : ''}
+      </div>
+      <span class="cycle-slot-time">${task.timeSlot.split('+')[0]}</span>`;
+    container.appendChild(div);
+  });
+}
+
+function getNextTopic(discId) {
+  const disc = DISCIPLINES.find(d => d.id === discId);
+  if (!disc) return '';
+  const next = disc.temas.find(t => !state.studied[disc.id+'_'+t.id]?.done);
+  return next ? '→ ' + next.nome : '✓ Todos os tópicos concluídos';
+}
+
+// ===================== CICLO PAGE =====================
+let cycleWeekOffset = 0;
+
+function cyclePrevWeek() { cycleWeekOffset--; renderCiclePage(); }
+function cycleNextWeek() { cycleWeekOffset++; renderCiclePage(); }
+
+function renderCiclePage() {
+  const startDate = new Date();
+  startDate.setHours(0,0,0,0);
+  startDate.setDate(startDate.getDate() + cycleWeekOffset * 7);
+
+  const cycle = buildCycle(startDate, 14);
+  const allTopics = getAllTopicsOrdered();
+
+  // Stats
+  const totalDone = Object.keys(state.cycleTasksDone).length;
+  const totalSlots = allTopics.length;
+  const statsEl = document.getElementById('ciclo-stats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--green);font-family:var(--font-mono)">${totalDone}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Sessões concluídas</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--accent);font-family:var(--font-mono)">${totalSlots}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Tópicos no ciclo</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--blue);font-family:var(--font-mono)">${Math.ceil(totalSlots/3)}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Dias para completar 1 ciclo</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:var(--purple);font-family:var(--font-mono)">${DISCIPLINES.length}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Disciplinas no ciclo</div>
+      </div>`;
+  }
+
+  const grid = document.getElementById('ciclo-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const todayKey = getDateKey(new Date());
+
+  Object.entries(cycle).forEach(([dateKey, tasks]) => {
+    const date = new Date(dateKey + 'T12:00');
+    const isToday = dateKey === todayKey;
+    const doneCnt = tasks.filter(t=>t.done).length;
+    const allDone = tasks.length > 0 && doneCnt === tasks.filter(t=>!t.carried).length;
+
+    const block = document.createElement('div');
+    block.style.cssText = `padding:12px;border-radius:10px;border:1px solid ${isToday?'rgba(232,200,74,0.4)':'var(--border)'};background:${isToday?'rgba(232,200,74,0.04)':'var(--bg2)'};margin-bottom:8px`;
+
+    const headerColor = isToday ? 'var(--accent)' : 'var(--text2)';
+    let header = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:500;color:${headerColor}">${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--text3)">${doneCnt}/${tasks.filter(t=>!t.carried).length}</span>
+        ${allDone ? '<span style="font-size:10px;color:var(--green)">✓ Completo</span>' : ''}
+      </div>
+    </div>`;
+
+    let taskHtml = tasks.map(task => `
+      <div class="cycle-task${task.done?' done-task':''}" style="padding:7px 0">
+        <input type="checkbox" data-taskkey="${task.taskKey}" ${task.done?'checked':''}
+          onchange="toggleCycleTask('${task.taskKey}','${task.discId}','${task.topicId}')">
+        <div style="width:3px;border-radius:99px;align-self:stretch;min-height:16px;background:${task.discColor};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div class="task-label" style="font-size:12px;font-weight:500;${task.done?'text-decoration:line-through;color:var(--text3)':'color:var(--text)'}">
+            ${task.discIcon} ${task.discName}
+          </div>
+          <div style="font-size:11px;color:var(--text3);${task.done?'text-decoration:line-through;':''}">
+            ${task.topicName}${task.carried?' ↩':''}
+            ${!task.done && task.needsQuestions?'<span style="color:var(--orange);margin-left:4px">📝 faltam questões</span>':''}
+          </div>
+        </div>
+        <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono);white-space:nowrap">${task.timeSlot.split('+')[0].trim()}</span>
+      </div>`).join('');
+
+    block.innerHTML = header + taskHtml;
+    grid.appendChild(block);
+  });
+}
+
+function renderRevisions() {
+  const container = document.getElementById('revisions-list');
+  const now = Date.now();
+  const in15 = now + 15 * 86400000;
+  const overdue = [];
+  const upcoming = [];
+
+  DISCIPLINES.forEach(disc => {
+    disc.temas.forEach(tema => {
+      const k = disc.id + '_' + tema.id;
+      const s = state.studied[k];
+      if (!s) return;
+
+      // Scheduled revision via nextRevDate
+      if (s.nextRevDate) {
+        const revTs = new Date(s.nextRevDate).getTime();
+        const daysUntil = Math.ceil((revTs - now) / 86400000);
+        if (revTs <= now) {
+          const daysSince = Math.abs(daysUntil);
+          overdue.push({ disc, tema, daysUntil: -daysSince, label: `Atrasada ${daysSince}d`, source: 'scheduled' });
+        } else if (revTs <= in15) {
+          upcoming.push({ disc, tema, daysUntil, label: daysUntil === 0 ? 'Hoje' : `Em ${daysUntil}d`, source: 'scheduled' });
+        }
+        return;
+      }
+
+      // Fallback: confidence-based spacing
+      if (s.done && s.lastRev) {
+        const daysSince = Math.floor((now - new Date(s.lastRev)) / 86400000);
+        const intervals = [1, 3, 7, 14, 30];
+        const conf = s.confidence || 1;
+        const nextRev = intervals[Math.min(conf - 1, intervals.length - 1)];
+        const daysUntil = nextRev - daysSince;
+        if (daysUntil <= 0) {
+          overdue.push({ disc, tema, daysUntil, label: `Atrasada ${Math.abs(daysUntil)}d`, source: 'auto' });
+        } else if (daysUntil <= 15) {
+          upcoming.push({ disc, tema, daysUntil, label: daysUntil === 0 ? 'Hoje' : `Em ${daysUntil}d`, source: 'auto' });
+        }
+      }
+    });
+  });
+
+  overdue.sort((a, b) => a.daysUntil - b.daysUntil);
+  upcoming.sort((a, b) => a.daysUntil - b.daysUntil);
+
+  if (overdue.length === 0 && upcoming.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px">Nenhuma revisão pendente nos próximos 15 dias.</div>';
+    return;
+  }
+
+  let html = '';
+
+  if (overdue.length > 0) {
+    html += `<div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin-bottom:6px">Atrasadas</div>`;
+    html += overdue.map(p => revItemHTML(p, 'var(--red)', 'badge-red')).join('');
+  }
+
+  if (upcoming.length > 0) {
+    if (overdue.length > 0) html += `<div style="height:10px"></div>`;
+    html += `<div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Próximas — até 15 dias</div>`;
+    html += upcoming.map(p => {
+      const color = p.daysUntil <= 3 ? 'var(--orange)' : 'var(--accent)';
+      const badge = p.daysUntil <= 3 ? 'badge-yellow' : 'badge-gray';
+      return revItemHTML(p, color, badge);
+    }).join('');
+  }
+
+  container.innerHTML = html;
+}
+
+function revItemHTML(p, barColor, badgeClass) {
+  return `<div class="rev-item">
+    <div class="urgency" style="background:${barColor}"></div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:500">${p.tema.nome}</div>
+      <div style="font-size:11px;color:var(--text2)">${p.disc.name}</div>
+    </div>
+    <span class="badge ${badgeClass}" style="white-space:nowrap">${p.label}</span>
+  </div>`;
+}
+
+// Returns avg score per topic across all questions {discId_topicId: pct|null}
+function getTopicAvgScores() {
+  const map = {};
+  state.questions.forEach(q => {
+    const k = q.discId + '_' + q.topicId;
+    if (!map[k]) map[k] = {total:0, hits:0};
+    map[k].total += q.total;
+    map[k].hits += q.hits;
+  });
+  const result = {};
+  Object.entries(map).forEach(([k, v]) => {
+    result[k] = v.total > 0 ? Math.round(v.hits/v.total*100) : null;
+  });
+  return result;
+}
+
+// Returns avg score per disc {discId: pct|null}
+function getDiscAvgScores() {
+  const map = {};
+  DISCIPLINES.forEach(d => { map[d.id] = {total:0, hits:0}; });
+  state.questions.forEach(q => {
+    if (map[q.discId]) { map[q.discId].total += q.total; map[q.discId].hits += q.hits; }
+  });
+  const result = {};
+  Object.entries(map).forEach(([id, v]) => {
+    result[id] = v.total > 0 ? Math.round(v.hits/v.total*100) : null;
+  });
+  return result;
+}
+
+function renderCritical() {
+  const container = document.getElementById('critical-list');
+  const scores = getDiscAvgScores();
+  // Only show disciplines with data and below 75%
+  const critical = DISCIPLINES
+    .map(d => ({ disc:d, pct: scores[d.id] }))
+    .filter(x => x.pct !== null && x.pct < 75)
+    .sort((a,b) => a.pct - b.pct);
+
+  if (critical.length === 0) {
+    const anyData = DISCIPLINES.some(d => scores[d.id] !== null);
+    container.innerHTML = `<div style="color:var(--text2);font-size:13px">${anyData ? '✅ Todas as disciplinas acima de 75% de média!' : 'Registre questões para ver seu desempenho por disciplina.'}</div>`;
+    return;
+  }
+  container.innerHTML = '';
+  critical.forEach(r => {
+    const pct = r.pct;
+    const color = pct < 50 ? 'var(--red)' : 'var(--orange)';
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+    div.innerHTML = `<div style="font-size:18px">${r.disc.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${r.disc.name}</div>
+        <div class="prog-bar" style="margin-top:4px">
+          <div class="prog-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:500;color:${color};font-family:var(--font-mono)">${pct}%</div>`;
+    container.appendChild(div);
+  });
+}
+
+let weekChartInst = null;
+function renderWeekChart() {
+  const labels = [];
+  const pctData = [];
+  const hoursData = [];
+  for (let i=6; i>=0; i--) {
+    const d = new Date(Date.now() - i*86400000);
+    const ds = d.toDateString();
+    labels.push(d.toLocaleDateString('pt-BR',{weekday:'short'}));
+    const qs = state.questions.filter(q => q.date === ds);
+    const total = qs.reduce((a,b)=>a+b.total,0);
+    const hits = qs.reduce((a,b)=>a+b.hits,0);
+    pctData.push(total > 0 ? Math.round(hits/total*100) : 0);
+    // Hours: from activities + pomodoro sessions
+    const acts = state.activities.filter(a => new Date(a.date).toDateString() === ds);
+    const actMin = acts.reduce((a,b)=>a+(b.timeMin||0),0);
+    const pomMin = state.pomSessions.filter(s => s.date === ds).reduce((a,b)=>a+b.minutes,0);
+    hoursData.push(parseFloat(((actMin + pomMin) / 60).toFixed(1)));
+  }
+  const canvas = document.getElementById('weekChart');
+  if (weekChartInst) weekChartInst.destroy();
+  weekChartInst = new Chart(canvas, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Horas estudadas',
+          data: hoursData,
+          backgroundColor: 'rgba(45,212,191,0.35)',
+          borderColor: 'rgba(45,212,191,0.7)',
+          borderWidth: 1,
+          borderRadius: 4,
+          yAxisID: 'yHours',
+        },
+        {
+          type: 'line',
+          label: 'Acertos %',
+          data: pctData,
+          borderColor: '#e8c84a',
+          backgroundColor: 'rgba(232,200,74,0.08)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#e8c84a',
+          yAxisID: 'yPct',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        yPct: {
+          type: 'linear', position: 'left',
+          min: 0, max: 100,
+          ticks: { color: '#e8c84a', font:{size:10}, callback: v => v+'%' },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        yHours: {
+          type: 'linear', position: 'right',
+          min: 0,
+          ticks: { color: '#2dd4bf', font:{size:10}, callback: v => v+'h' },
+          grid: { display: false }
+        },
+        x: { ticks: { color: '#5a5b66', font:{size:11} }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ===================== JORNADA =====================
+function renderJornada() {
+  const container = document.getElementById('jornada-grid');
+  container.innerHTML = '';
+  let totalStudied = 0, totalAll = 0;
+  DISCIPLINES.forEach(disc => {
+    const done = disc.temas.filter(t => state.studied[disc.id+'_'+t.id]?.done).length;
+    const total = disc.temas.length;
+    const pct = Math.round(done/total*100);
+    totalStudied += done; totalAll += total;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="font-size:24px">${disc.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">${disc.name}</div>
+        <div style="font-size:12px;color:var(--text2)">${done}/${total} tópicos · peso ${disc.peso}%</div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:20px;font-weight:500;color:${disc.color}">${pct}%</div>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${disc.color}"></div></div>`;
+    container.appendChild(card);
+  });
+  // Add overall
+  const overallPct = Math.round(totalStudied/totalAll*100);
+  const overall = document.createElement('div');
+  overall.className = 'card';
+  overall.style.cssText = 'border-color:rgba(232,200,74,0.3);background:rgba(232,200,74,0.04)';
+  overall.innerHTML = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <div style="font-size:24px">🏆</div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:500">Progresso geral</div>
+      <div style="font-size:12px;color:var(--text2)">${totalStudied}/${totalAll} tópicos concluídos</div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--accent)">${overallPct}%</div>
+  </div>
+  <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:${overallPct}%;background:var(--accent)"></div></div>`;
+  container.insertBefore(overall, container.firstChild);
+}
+
+// ===================== MOTIVATIONAL PHRASES =====================
+const FRASES = [
+  {frase: "A disciplina é a ponte entre as metas e as conquistas.", autor: "Jim Rohn"},
+  {frase: "O sucesso é a soma de pequenos esforços repetidos dia após dia.", autor: "Robert Collier"},
+  {frase: "Nada na vida deve ser temido, somente compreendido.", autor: "Marie Curie"},
+  {frase: "A única maneira de fazer um ótimo trabalho é amar o que você faz.", autor: "Steve Jobs"},
+  {frase: "Cada dia é uma nova oportunidade para mudar sua vida.", autor: "Oprah Winfrey"},
+  {frase: "O caminho para o sucesso está sempre em construção.", autor: "Lily Tomlin"},
+  {frase: "Determinação, coragem e autoconfiança são fatores decisivos para o sucesso.", autor: "Nelson Mandela"},
+  {frase: "Estude como se você fosse viver para sempre, viva como se fosse morrer amanhã.", autor: "Mahatma Gandhi"},
+  {frase: "O conhecimento é a única coisa que ninguém pode tirar de você.", autor: "B.B. King"},
+  {frase: "Grandes realizações são possíveis quando você não desiste.", autor: "Carlos Slim"},
+  {frase: "Não é o mais forte que sobrevive, mas o mais adaptável.", autor: "Charles Darwin"},
+  {frase: "Você não precisa ser ótimo para começar, mas precisa começar para ser ótimo.", autor: "Zig Ziglar"},
+  {frase: "A persistência é o caminho do êxito.", autor: "Charles Chaplin"},
+  {frase: "Toda conquista começa com a decisão de tentar.", autor: "Gail Devers"},
+  {frase: "O segredo de avançar é começar.", autor: "Mark Twain"},
+  {frase: "Seja a mudança que você quer ver no mundo.", autor: "Mahatma Gandhi"},
+  {frase: "A educação é a arma mais poderosa que você pode usar para mudar o mundo.", autor: "Nelson Mandela"},
+  {frase: "Acredite em si mesmo e tudo mais se encaixará no lugar.", autor: "Lucille Ball"},
+  {frase: "Dificuldades preparam pessoas comuns para destinos extraordinários.", autor: "C.S. Lewis"},
+  {frase: "O futuro pertence àqueles que acreditam na beleza de seus sonhos.", autor: "Eleanor Roosevelt"},
+  {frase: "Quem tem um porquê para viver pode suportar qualquer como.", autor: "Friedrich Nietzsche"},
+  {frase: "Sucesso não é definitivo, fracasso não é fatal: o que conta é a coragem de continuar.", autor: "Winston Churchill"},
+  {frase: "A força não vem da capacidade física. Vem de uma vontade indomável.", autor: "Mahatma Gandhi"},
+  {frase: "O esforço de hoje é a vitória de amanhã.", autor: "Provérbio"},
+  {frase: "Não espere por circunstâncias ideais. Elas nunca serão perfeitas.", autor: "Martin Van Buren"},
+  {frase: "Cada hora de estudo hoje é uma porta aberta amanhã.", autor: "Provérbio"},
+  {frase: "A vitória tem sabor especial para quem sabe o preço da preparação.", autor: "Provérbio"},
+  {frase: "Vai lá e faz. O processo te molda.", autor: "Provérbio"},
+  {frase: "Toda aprovação começa no primeiro tópico estudado.", autor: "Provérbio"},
+  {frase: "Consistência supera intensidade quando o prazo é longo.", autor: "Provérbio"},
+];
+
+function renderFrase() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  const f = FRASES[dayOfYear % FRASES.length];
+  const el = document.getElementById('frase-do-dia');
+  const au = document.getElementById('frase-autor');
+  if (el) el.textContent = '"' + f.frase + '"';
+  if (au) au.textContent = '— ' + f.autor;
+}
+
+// ===================== DISCIPLINAS PAGE =====================
+let currentDiscId = 'port';
+
+function renderDisciplinasPage() {
+  const sel = document.getElementById('disc-selector');
+  if (sel && sel.children.length === 0) {
+    DISCIPLINES.forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-ghost';
+      btn.style.cssText = 'font-size:12px;padding:5px 12px;display:flex;align-items:center;gap:5px';
+      btn.id = 'dsel-'+d.id;
+      btn.innerHTML = d.icon + ' ' + d.name.split(' ').slice(-1)[0];
+      btn.onclick = () => selectDisc(d.id);
+      sel.appendChild(btn);
+    });
+  }
+  selectDisc(currentDiscId);
+}
+
+function selectDisc(discId) {
+  currentDiscId = discId;
+  DISCIPLINES.forEach(d => {
+    const btn = document.getElementById('dsel-'+d.id);
+    if (btn) btn.style.background = d.id===discId ? 'rgba(232,200,74,0.15)' : '';
+    if (btn) btn.style.color = d.id===discId ? 'var(--accent)' : '';
+    if (btn) btn.style.borderColor = d.id===discId ? 'rgba(232,200,74,0.3)' : '';
+  });
+  renderDiscContent(discId);
+}
+
+function renderDiscContent(discId) {
+  const disc = DISCIPLINES.find(d => d.id === discId);
+  if (!disc) return;
+  const container = document.getElementById('disc-content');
+  const scores = getDiscAvgScores();
+  const topicScores = getTopicAvgScores();
+  const pct = scores[discId];
+
+  // Find critical topics (avg < 75% AND has data AND marked Avançar)
+  const criticalTopics = disc.temas.filter(t => {
+    const k = discId+'_'+t.id;
+    const s = state.studied[k] || {};
+    const tPct = topicScores[k];
+    return tPct !== null && tPct < 75 && s.statusAvancar;
+  });
+
+  container.innerHTML = `
+    <div class="disc-header">
+      <div class="disc-icon" style="background:${disc.color}22">${disc.icon}</div>
+      <div style="flex:1">
+        <div style="font-family:var(--font-title);font-size:20px;font-weight:700">${disc.name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">Peso no edital: ${disc.peso}% · ${disc.temas.length} tópicos</div>
+      </div>
+      ${pct !== null ? `<div style="text-align:center">
+        <div style="font-family:var(--font-mono);font-size:32px;font-weight:700;color:${pct<75?'var(--red)':'var(--green)'}">${pct}%</div>
+        <div style="font-size:11px;color:${pct<75?'var(--red)':'var(--text2)'}">${pct<75?'⚠️ Abaixo de 75%':'✅ Acima de 75%'}</div>
+      </div>` : ''}
+    </div>
+
+    <!-- AVISO FIXO -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(232,200,74,0.08);border:1px solid rgba(232,200,74,0.25);border-radius:10px;margin-bottom:16px">
+      <div style="font-size:16px">💡</div>
+      <div style="font-size:13px;color:var(--accent)">Avance para o próximo tópico <strong>somente quando os acertos estiverem acima de 75%</strong> na média histórica.</div>
+    </div>
+
+    ${criticalTopics.length > 0 ? `
+    <!-- PAINEL CRÍTICOS -->
+    <div style="padding:14px 16px;background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.25);border-radius:10px;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:var(--red);margin-bottom:10px">🚨 Tópicos críticos — média abaixo de 75%</div>
+      ${criticalTopics.map(t => {
+        const k = discId+'_'+t.id;
+        const tPct = topicScores[k];
+        return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(248,113,113,0.15)">
+          <div style="flex:1;font-size:13px">${t.nome}</div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--red);font-weight:500">${tPct}%</div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:0">Tópicos do edital</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="markAllDisc('${discId}')">Marcar todos ✓</button>
+      </div>
+      <div class="table-wrap">
+        <table id="table-${discId}">
+          <thead>
+            <tr>
+              <th style="width:40px">✓</th>
+              <th>Assunto</th>
+              <th style="width:70px">Prio.</th>
+              <th style="width:95px" class="disc-table-hide">Último contato</th>
+              <th style="width:110px" class="disc-table-hide">Confiança</th>
+              <th style="width:70px">Média</th>
+              <th style="width:80px" class="disc-table-hide">Teoria</th>
+              <th style="width:80px" class="disc-table-hide">Exercícios</th>
+              <th style="width:70px">Avançar</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-${discId}"></tbody>
+        </table>
+      </div>
+    </div>`;
+  renderDiscTable(discId);
+}
+
+function renderDiscTable(discId) {
+  const disc = DISCIPLINES.find(d => d.id === discId);
+  const tbody = document.getElementById('tbody-'+discId);
+  if (!tbody) return;
+  const topicScores = getTopicAvgScores();
+  tbody.innerHTML = '';
+  disc.temas.forEach(tema => {
+    const k = discId+'_'+tema.id;
+    const s = state.studied[k] || {done:false, lastRev:null, confidence:1, statusTeoria:false, statusExercicios:false, statusAvancar:false};
+    const tr = document.createElement('tr');
+    const confStars = [1,2,3,4,5].map(n =>
+      `<span class="star ${(s.confidence||1)>=n?'on':''}" onclick="setConf('${k}',${n})">★</span>`
+    ).join('');
+    const tPct = topicScores[k];
+    const pctColor = tPct===null?'var(--text3)':tPct<75?'var(--red)':'var(--green)';
+    const isCritical = tPct !== null && tPct < 75 && s.statusAvancar;
+
+    tr.style.background = isCritical ? 'rgba(248,113,113,0.05)' : '';
+    tr.innerHTML = `
+      <td><button class="check-btn ${s.done?'done':''}" onclick="toggleStudied('${k}')">✓</button></td>
+      <td>
+        <div style="font-size:13px;font-weight:${s.done?'400':'500'};color:${s.done?'var(--text2)':'var(--text)'};text-decoration:${s.done?'line-through':'none'}">
+          ${isCritical?'🚨 ':''}${tema.nome}
+        </div>
+      </td>
+      <td><span class="badge ${tema.critico?'badge-red':'badge-gray'}" style="font-size:10px">${tema.critico?'Alta':'Normal'}</span></td>
+      <td class="disc-table-hide" style="font-size:11px;color:var(--text2);font-family:var(--font-mono)">${s.lastRev ? new Date(s.lastRev).toLocaleDateString('pt-BR') : '—'}</td>
+      <td class="disc-table-hide"><div class="stars">${confStars}</div></td>
+      <td style="font-family:var(--font-mono);font-size:12px;color:${pctColor};font-weight:500">${tPct !== null ? tPct+'%' : '—'}</td>
+      <td class="disc-table-hide" style="text-align:center">
+        <input type="checkbox" ${s.statusTeoria?'checked':''} style="accent-color:var(--blue);width:16px;height:16px;cursor:pointer" onchange="setTopicStatus('${k}','statusTeoria',this.checked)">
+      </td>
+      <td class="disc-table-hide" style="text-align:center">
+        <input type="checkbox" ${s.statusExercicios?'checked':''} style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer" onchange="setTopicStatus('${k}','statusExercicios',this.checked)">
+      </td>
+      <td style="text-align:center">
+        <input type="checkbox" ${s.statusAvancar?'checked':''} style="accent-color:var(--green);width:16px;height:16px;cursor:pointer" onchange="setTopicStatus('${k}','statusAvancar',this.checked)" ${tPct!==null&&tPct<75?'title="Média abaixo de 75%! Revise antes de avançar."':''}>
+      </td>
+      <td style="text-align:center">
+        <button style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:4px" onclick="deleteTopicQuestions('${discId}','${tema.id}')" title="Apagar registros deste tópico">🗑</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function setTopicStatus(key, field, value) {
+  if (!state.studied[key]) state.studied[key] = {done:false, lastRev:null, confidence:1};
+  state.studied[key][field] = value;
+  // If marking Avançar and score < 75%, warn
+  if (field === 'statusAvancar' && value) {
+    const topicScores = getTopicAvgScores();
+    const pct = topicScores[key];
+    if (pct !== null && pct < 75) {
+      alert(`⚠️ Atenção! A média histórica deste tópico é ${pct}%, abaixo dos 75% recomendados. Recomenda-se revisar antes de avançar.`);
+    }
+  }
+  saveState();
+  const [discId] = key.split('_');
+  renderDiscContent(discId); // refresh including critical panel
+}
+
+function deleteTopicQuestions(discId, topicId) {
+  const count = state.questions.filter(q=>q.discId===discId&&q.topicId===topicId).length;
+  if (count === 0) { alert('Nenhum registro encontrado para este tópico.'); return; }
+  confirmDelete(
+    `Excluir os ${count} registro(s) de questões do tópico? Esta ação não pode ser desfeita.`,
+    () => {
+      state.questions = state.questions.filter(q=>!(q.discId===discId&&q.topicId===topicId));
+      saveState();
+      renderDiscContent(discId);
+    }
+  );
+}
+
+function toggleStudied(key) {
+  if (!state.studied[key]) state.studied[key] = {done:false, lastRev:null, confidence:1};
+  state.studied[key].done = !state.studied[key].done;
+  if (state.studied[key].done) state.studied[key].lastRev = new Date().toISOString();
+
+  // When marking a topic as done, clear today's locked cycle slots for this disc
+  // so the cycle recalculates and skips this topic from tomorrow onwards
+  const [discId] = key.split('_');
+  const todayKey = getDateKey(new Date());
+  Object.keys(state.cycleAssigned).forEach(slotKey => {
+    if (slotKey.startsWith(todayKey) && state.cycleAssigned[slotKey].discId === discId) {
+      delete state.cycleAssigned[slotKey];
+    }
+  });
+
+  saveState();
+  renderDiscTable(discId);
+}
+
+function setConf(key, val) {
+  if (!state.studied[key]) state.studied[key] = {done:false, lastRev:null, confidence:1};
+  state.studied[key].confidence = val;
+  saveState();
+  const [discId] = key.split('_');
+  renderDiscTable(discId);
+}
+
+function markAllDisc(discId) {
+  const disc = DISCIPLINES.find(d => d.id === discId);
+  disc.temas.forEach(t => {
+    const k = discId+'_'+t.id;
+    if (!state.studied[k]) state.studied[k] = {done:false, lastRev:null, confidence:1};
+    state.studied[k].done = true;
+    if (!state.studied[k].lastRev) state.studied[k].lastRev = new Date().toISOString();
+  });
+  saveState();
+  renderDiscTable(discId);
+}
+
+// ===================== QUESTÕES =====================
+function setupQuestaoForm() {
+  const sel = document.getElementById('q-disc');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  DISCIPLINES.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.id; o.textContent = d.name;
+    sel.appendChild(o);
+  });
+  document.getElementById('q-date').value = new Date().toLocaleDateString('pt-BR');
+}
+
+function updateTopicSelect() {
+  const discId = document.getElementById('q-disc').value;
+  const sel = document.getElementById('q-topic');
+  sel.innerHTML = '';
+  if (!discId) { sel.innerHTML = '<option>Selecione a disciplina primeiro</option>'; return; }
+  const disc = DISCIPLINES.find(d => d.id === discId);
+  disc.temas.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.id; o.textContent = t.nome;
+    sel.appendChild(o);
+  });
+}
+
+function registerQuestion() {
+  const discId = document.getElementById('q-disc').value;
+  const topicId = document.getElementById('q-topic').value;
+  const total = parseInt(document.getElementById('q-total').value);
+  const hits = parseInt(document.getElementById('q-hits').value);
+  if (!discId || !topicId || isNaN(total) || isNaN(hits)) { alert('Preencha todos os campos.'); return; }
+  if (hits > total) { alert('Acertos não pode ser maior que questões.'); return; }
+  state.questions.push({ date: new Date().toDateString(), discId, topicId, total, hits });
+  saveState();
+  renderQuestoes();
+}
+
+let perfChartInst = null;
+function renderQuestoes() {
+  setupQuestaoForm();
+  const tbody = document.getElementById('q-history');
+  const empty = document.getElementById('q-empty');
+  tbody.innerHTML = '';
+  const recent = [...state.questions].reverse().slice(0,20);
+  if (recent.length === 0) { empty.style.display='block'; } else { empty.style.display='none'; }
+  recent.forEach(q => {
+    const disc = DISCIPLINES.find(d => d.id === q.discId);
+    const topic = disc?.temas.find(t => t.id === q.topicId);
+    const pct = Math.round(q.hits/q.total*100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-size:11px;color:var(--text2);font-family:var(--font-mono)">${new Date(q.date).toLocaleDateString('pt-BR')}</td>
+      <td>${disc?.icon||''} ${disc?.name||q.discId}</td>
+      <td style="font-size:12px;color:var(--text2)">${topic?.nome||q.topicId}</td>
+      <td style="font-family:var(--font-mono)">${q.total}</td>
+      <td style="font-family:var(--font-mono)">${q.hits}</td>
+      <td><span class="badge ${pct<50?'badge-red':pct<70?'badge-yellow':'badge-green'}">${pct}%</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Performance chart
+  const byDisc = getScoreByDisc();
+  const labels = DISCIPLINES.map(d => d.icon+' '+d.name.split(' ')[d.name.split(' ').length-1]);
+  const pcts = DISCIPLINES.map(d => byDisc[d.id].total > 0 ? Math.round(byDisc[d.id].hits/byDisc[d.id].total*100) : 0);
+  const colors = DISCIPLINES.map(d => d.color+'cc');
+  const canvas = document.getElementById('perfChart');
+  if (perfChartInst) perfChartInst.destroy();
+  perfChartInst = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: pcts,
+        backgroundColor: colors,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min:0, max:100, ticks:{color:'#5a5b66',font:{size:11}}, grid:{color:'rgba(255,255,255,0.05)'} },
+        x: { ticks:{color:'#5a5b66',font:{size:10},maxRotation:20}, grid:{display:false} }
+      }
+    }
+  });
+}
+
+// ===================== POMODORO =====================
+let pomInterval = null;
+let pomRunning = false;
+let pomTotal = 25*60;
+let pomLeft = 25*60;
+let pomSessions = 0;
+let pomTotalMin = 0;
+
+function setPom(min, label) {
+  resetPom();
+  pomTotal = min*60;
+  pomLeft = min*60;
+  document.getElementById('pom-label').textContent = label;
+  renderPom();
+}
+
+function togglePom() {
+  if (pomRunning) {
+    clearInterval(pomInterval);
+    pomRunning = false;
+    document.getElementById('pom-btn').textContent = 'Retomar';
+  } else {
+    pomRunning = true;
+    document.getElementById('pom-btn').textContent = 'Pausar';
+    pomInterval = setInterval(() => {
+      pomLeft--;
+      if (pomLeft <= 0) {
+        clearInterval(pomInterval);
+        pomRunning = false;
+        pomSessions++;
+        pomTotalMin += Math.round(pomTotal/60);
+        state.pomSessions.push({date: today, minutes: Math.round(pomTotal/60)});
+        saveState();
+        renderPomSessions();
+        document.getElementById('pom-btn').textContent = 'Iniciar';
+        alert('⏰ Sessão concluída! Faça uma pausa.');
+        resetPom();
+        return;
+      }
+      renderPom();
+    }, 1000);
+  }
+}
+
+function resetPom() {
+  clearInterval(pomInterval);
+  pomRunning = false;
+  pomLeft = pomTotal;
+  document.getElementById('pom-btn').textContent = 'Iniciar';
+  renderPom();
+}
+
+function renderPom() {
+  const m = String(Math.floor(pomLeft/60)).padStart(2,'0');
+  const s = String(pomLeft%60).padStart(2,'0');
+  document.getElementById('pom-time').textContent = m+':'+s;
+  const pct = Math.round((1 - pomLeft/pomTotal)*100);
+  document.getElementById('pom-prog').style.width = pct+'%';
+}
+
+function renderPomSessions() {
+  const todaySessions = state.pomSessions.filter(s => s.date === today);
+  const totalMin = todaySessions.reduce((a,b)=>a+b.minutes,0);
+  const metaPct = Math.min(Math.round(totalMin/180*100),100);
+  const elTotal = document.getElementById('pom-total');
+  const elProg = document.getElementById('pom-meta-prog');
+  const elPct = document.getElementById('pom-meta-pct');
+  if (elTotal) elTotal.textContent = totalMin + ' min';
+  if (elProg) elProg.style.width = metaPct+'%';
+  if (elPct) elPct.textContent = metaPct + '% da meta';
+}
+
+// ===================== SENSITIVE TOPICS =====================
+function renderSensitiveTopics() {
+  const bar = document.getElementById('sensitive-bar');
+  const list = document.getElementById('sensitive-list');
+  const active = state.sensitiveTopics.filter(t => !t.resolved);
+  if (state.sensitiveTopics.length === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'block';
+  bar.style.cssText = 'display:block;background:var(--bg2);border:1px solid rgba(248,113,113,0.25);border-radius:var(--card-r);padding:16px';
+
+  const header = bar.querySelector('.sensitive-header') || (() => {
+    // already rendered via HTML, just update list
+    return null;
+  })();
+
+  list.innerHTML = '';
+  const toShow = active.slice(0, 5);
+  if (toShow.length === 0) {
+    list.innerHTML = '<div style="color:var(--text2);font-size:13px">✅ Todos os tópicos sensíveis foram revisados!</div>';
+    return;
+  }
+  toShow.forEach(t => {
+    const disc = DISCIPLINES.find(d => d.id === t.discId);
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(248,113,113,0.12)';
+    div.innerHTML = `
+      <input type="checkbox" ${t.resolved?'checked':''} style="width:16px;height:16px;accent-color:var(--green);cursor:pointer;margin-top:2px;flex-shrink:0"
+        onchange="resolveSensitive('${t.id}')">
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:1px">${disc ? disc.icon+' '+disc.name : ''}</div>
+        <div style="font-size:13px">${t.obs}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:1px">${new Date(t.date).toLocaleDateString('pt-BR')}</div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function resolveSensitive(id) {
+  const t = state.sensitiveTopics.find(x => x.id === id);
+  if (t) {
+    t.resolved = !t.resolved; // toggle
+    saveState();
+    renderSensitiveTopics();
+    // refresh sensitive page if open
+    const pg = document.getElementById('sensitive-page-list');
+    if (pg) renderSensitivePage();
+  }
+}
+
+function openSensitiveModal() {
+  const sel = document.getElementById('sens-disc');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  DISCIPLINES.forEach(d => { sel.innerHTML += `<option value="${d.id}">${d.icon} ${d.name}</option>`; });
+  document.getElementById('sens-obs').value = '';
+  document.getElementById('modal-sensitive').classList.add('open');
+}
+
+function closeSensitiveModal(e) {
+  if (e.target === document.getElementById('modal-sensitive')) document.getElementById('modal-sensitive').classList.remove('open');
+}
+
+function saveSensitiveTopic() {
+  const discId = document.getElementById('sens-disc').value;
+  const obs = document.getElementById('sens-obs').value.trim();
+  if (!obs) { alert('Descreva o tópico sensível.'); return; }
+  state.sensitiveTopics.push({
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    discId,
+    obs,
+    resolved: false
+  });
+  saveState();
+  document.getElementById('modal-sensitive').classList.remove('open');
+  renderSensitiveTopics();
+}
+
+// ===================== ACTIVITY LOG =====================
+function renderActivityLog() {
+  const container = document.getElementById('activity-log-list');
+  const recent = [...state.activities].reverse().slice(0, 5);
+  if (recent.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px">Nenhuma atividade registrada ainda.</div>';
+    return;
+  }
+  const typeLabel = {teoria:'Teoria', exercicio:'Exercícios', simulado:'Simulado', revisao:'Revisão'};
+  container.innerHTML = recent.map(a => {
+    const disc = DISCIPLINES.find(d => d.id === a.discId);
+    const topic = disc?.temas.find(t => t.id === a.topicId);
+    const qPct = a.qTotal > 0 ? Math.round(a.qHits/a.qTotal*100) : null;
+    const discColor = disc?.color || 'var(--text2)';
+    return `<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:3px;border-radius:99px;align-self:stretch;background:${discColor};min-height:20px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
+          <span class="act-type-badge act-${a.type}">${typeLabel[a.type]||a.type}</span>
+          <span style="font-size:12px;font-weight:500;color:${discColor}">${disc?.icon||''} ${disc?.name||a.discId}</span>
+        </div>
+        ${topic ? `<div style="font-size:12px;color:var(--text2);margin-bottom:3px">${topic.nome}</div>` : ''}
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text3)">⏱ ${a.timeMin} min</span>
+          ${qPct !== null ? `<span style="font-size:11px;color:${qPct<50?'var(--red)':qPct<70?'var(--accent)':'var(--green)'};font-family:var(--font-mono)">${a.qHits}/${a.qTotal} (${qPct}%)</span>` : ''}
+          ${a.obs ? `<span style="font-size:11px;color:var(--text3);font-style:italic">"${a.obs.length>35?a.obs.slice(0,35)+'…':a.obs}"</span>` : ''}
+        </div>
+      </div>
+      <span style="font-size:10px;color:var(--text3);white-space:nowrap;font-family:var(--font-mono)">${new Date(a.date).toLocaleDateString('pt-BR')}</span>
+    </div>`;
+  }).join('');
+}
+
+function openActivityModal() {
+  const sel = document.getElementById('act-disc');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  DISCIPLINES.forEach(d => { sel.innerHTML += `<option value="${d.id}">${d.icon} ${d.name}</option>`; });
+  document.getElementById('act-topic').innerHTML = '<option value="">Selecione a disciplina</option>';
+  document.getElementById('act-time').value = 60;
+  document.getElementById('act-q-total').value = '';
+  document.getElementById('act-q-hits').value = '';
+  document.getElementById('act-obs').value = '';
+  document.getElementById('act-is-sensitive').checked = false;
+  document.getElementById('act-needs-rev').checked = false;
+  document.getElementById('act-rev-options').style.display = 'none';
+  const r15 = document.querySelector('input[name="act-rev-days"][value="15"]');
+  if (r15) r15.checked = true;
+  document.getElementById('modal-activity').classList.add('open');
+}
+
+function closeActivityModal(e) {
+  if (e.target === document.getElementById('modal-activity')) document.getElementById('modal-activity').classList.remove('open');
+}
+
+function updateActTopic() {
+  const discId = document.getElementById('act-disc').value;
+  const sel = document.getElementById('act-topic');
+  sel.innerHTML = '';
+  if (!discId) { sel.innerHTML = '<option>Selecione a disciplina</option>'; return; }
+  const disc = DISCIPLINES.find(d => d.id === discId);
+  sel.innerHTML = '<option value="">Tópico geral</option>';
+  disc.temas.forEach(t => { sel.innerHTML += `<option value="${t.id}">${t.nome}</option>`; });
+}
+
+function toggleRevOptions() {
+  const checked = document.getElementById('act-needs-rev').checked;
+  document.getElementById('act-rev-options').style.display = checked ? 'block' : 'none';
+}
+
+function saveActivity() {
+  const discId = document.getElementById('act-disc').value;
+  const topicId = document.getElementById('act-topic').value;
+  const type = document.getElementById('act-type').value;
+  const timeMin = parseInt(document.getElementById('act-time').value) || 0;
+  const qTotal = parseInt(document.getElementById('act-q-total').value) || 0;
+  const qHits = parseInt(document.getElementById('act-q-hits').value) || 0;
+  const obs = document.getElementById('act-obs').value.trim();
+  const isSensitive = document.getElementById('act-is-sensitive').checked;
+  const needsRev = document.getElementById('act-needs-rev').checked;
+  const revDays = needsRev ? parseInt(document.querySelector('input[name="act-rev-days"]:checked')?.value || 15) : null;
+
+  if (!discId) { alert('Selecione a disciplina.'); return; }
+  if (qHits > qTotal) { alert('Acertos não pode ser maior que questões.'); return; }
+
+  const activity = {
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    discId, topicId, type, timeMin, qTotal, qHits, obs
+  };
+  state.activities.push(activity);
+
+  // Update last contact and optionally schedule revision
+  if (discId && topicId) {
+    const k = discId + '_' + topicId;
+    if (!state.studied[k]) state.studied[k] = {done: false, lastRev: null, confidence: 1};
+    state.studied[k].lastRev = new Date().toISOString();
+    if (needsRev && revDays) {
+      const revDate = new Date(Date.now() + revDays * 86400000);
+      state.studied[k].nextRevDate = revDate.toISOString();
+      state.studied[k].nextRevDays = revDays;
+    }
+  }
+
+  if (qTotal > 0 && discId && topicId) {
+    state.questions.push({ date: new Date().toDateString(), discId, topicId, total: qTotal, hits: qHits });
+  }
+
+  if (isSensitive && obs) {
+    state.sensitiveTopics.push({
+      id: Date.now().toString() + 's',
+      date: new Date().toISOString(),
+      discId,
+      obs,
+      resolved: false
+    });
+  }
+
+  saveState();
+  document.getElementById('modal-activity').classList.remove('open');
+
+  // Mark the cycle task as done for today (or the pending task if opened from checkbox)
+  // Find today's taskKey for this disc+topic and mark it done
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+  const todayKey = getDateKey(todayDate);
+  const todayCycle = buildCycle(todayDate, 1);
+  const todayTasks = todayCycle[todayKey] || [];
+  todayTasks.forEach(t => {
+    if (t.discId === discId && t.topicId === topicId) {
+      state.cycleTasksDone[t.taskKey] = true;
+    }
+  });
+
+  // Also handle pendingTaskKey if set
+  if (pendingTaskKey && pendingTaskDiscId === discId && pendingTaskTopicId === topicId) {
+    state.cycleTasksDone[pendingTaskKey] = true;
+  }
+  pendingTaskKey = null;
+  pendingTaskDiscId = null;
+  pendingTaskTopicId = null;
+  const hint = document.getElementById('act-modal-hint');
+  if (hint) hint.remove();
+
+  saveState();
+  renderHome();
+  if (currentPage === 'agenda') renderAgendaPage();
+  if (currentPage === 'ciclo') renderCiclePage();
+}
+
+// ===================== AGENDA PAGE =====================
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let habitYear = new Date().getFullYear();
+let habitMonth = new Date().getMonth();
+
+let agendaView = 'day';
+let agendaDayOffset = 0;   // days from today
+let agendaWeekOffset = 0;  // weeks from current
+
+function setAgendaView(v) {
+  agendaView = v;
+  ['day','week','month'].forEach(x => {
+    document.getElementById('agenda-view-'+x).style.display = x===v ? 'block' : 'none';
+    const tab = document.getElementById('view-tab-'+x);
+    if (tab) {
+      tab.style.background = x===v ? 'var(--accent)' : '';
+      tab.style.color = x===v ? '#0e0f13' : '';
+    }
+  });
+  if (v==='day') renderAgendaDay();
+  else if (v==='week') renderAgendaWeek();
+  else renderCalendar();
+}
+
+function renderAgendaPage() {
+  renderExtras();
+  setAgendaView(agendaView);
+}
+
+// ---- DAILY VIEW ----
+function agendaDayPrev() { agendaDayOffset--; renderAgendaDay(); }
+function agendaDayNext() { agendaDayOffset++; renderAgendaDay(); }
+
+function renderAgendaDay() {
+  const date = new Date();
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate() + agendaDayOffset);
+  const dow = date.getDay();
+  const dateKey = getDateKey(date);
+  const ds = date.toDateString();
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const isWeekend = dow===0||dow===6;
+  const isToday = agendaDayOffset === 0;
+
+  document.getElementById('agenda-day-title').textContent =
+    (isToday ? 'Hoje — ' : '') + days[dow] + ', ' + date.getDate() + ' de ' + months[date.getMonth()] + ' ' + date.getFullYear();
+
+  // Cycle tasks for this day
+  const cycle = buildCycle(date, 1);
+  const tasks = (cycle[dateKey] || []).filter(t => !t.carried);
+
+  const container = document.getElementById('agenda-day-tasks');
+  container.innerHTML = '';
+
+  if (tasks.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px 0">Nenhuma atividade programada.</div>';
+  } else {
+    tasks.forEach(task => {
+      const row = document.createElement('div');
+      row.className = 'cycle-task' + (task.done ? ' done-task' : '');
+      row.style.cssText = 'padding:10px 0;border-bottom:1px solid var(--border)';
+
+      // Check if activity was registered for this topic on this day
+      const actRegistered = state.activities.some(a =>
+        new Date(a.date).toDateString() === ds && a.discId === task.discId && a.topicId === task.topicId
+      );
+
+      row.innerHTML = `
+        <input type="checkbox" data-taskkey="${task.taskKey}" ${task.done?'checked':''}
+          onchange="toggleCycleTask('${task.taskKey}','${task.discId}','${task.topicId}')">
+        <div style="width:3px;min-height:20px;border-radius:99px;align-self:stretch;background:${task.discColor};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;${task.done?'text-decoration:line-through;color:var(--text3)':''}">${task.discIcon} ${task.discName}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:1px;${task.done?'text-decoration:line-through;':''}">${task.topicName}</div>
+          ${actRegistered ? `<div style="font-size:11px;color:var(--green);margin-top:3px">✓ Atividade registrada</div>` : ''}
+        </div>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--font-mono);white-space:nowrap">${task.timeSlot.split('+')[0]}</span>`;
+      container.appendChild(row);
+    });
+  }
+
+  // Day schedule
+  const schedEl = document.getElementById('agenda-day-schedule');
+  if (schedEl) {
+    schedEl.innerHTML = isWeekend
+      ? '<div style="font-weight:500">Fim de semana</div><div style="color:var(--text2);font-size:12px;margin-top:2px">18:00 – 21:00 (3h)</div>'
+      : '<div style="font-weight:500">Dia útil</div><div style="color:var(--text2);font-size:12px;margin-top:2px">08:00 – 10:30 + 21:00 – 22:00 (3,5h)</div>';
+  }
+
+  // Day extras
+  const extrasEl = document.getElementById('agenda-day-extras');
+  if (extrasEl) {
+    const dayExtras = state.extras.filter(e => e.date === dateKey);
+    extrasEl.innerHTML = dayExtras.length === 0
+      ? '<div style="color:var(--text2);font-size:13px">Nenhum.</div>'
+      : dayExtras.map(e => `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">📌 ${e.desc}${e.time?' · '+e.time:''}</div>`).join('');
+  }
+}
+
+// ---- WEEKLY VIEW ----
+function agendaWeekPrev() { agendaWeekOffset--; renderAgendaWeek(); }
+function agendaWeekNext() { agendaWeekOffset++; renderAgendaWeek(); }
+
+function renderAgendaWeek() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay() + agendaWeekOffset*7);
+
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate()+6);
+
+  document.getElementById('agenda-week-title').textContent =
+    startOfWeek.getDate()+' '+months[startOfWeek.getMonth()]+' – '+endOfWeek.getDate()+' '+months[endOfWeek.getMonth()]+' '+endOfWeek.getFullYear();
+
+  const grid = document.getElementById('agenda-week-grid');
+  grid.innerHTML = '';
+
+  const cycle = buildCycle(startOfWeek, 7);
+  const todayStr = new Date().toDateString();
+
+  for (let i=0; i<7; i++) {
+    const date = new Date(startOfWeek); date.setDate(startOfWeek.getDate()+i);
+    const dateKey = getDateKey(date);
+    const ds = date.toDateString();
+    const isToday = ds === todayStr;
+    const tasks = (cycle[dateKey] || []).filter(t=>!t.carried);
+    const doneCnt = tasks.filter(t=>t.done).length;
+
+    const col = document.createElement('div');
+    col.style.cssText = `background:${isToday?'rgba(232,200,74,0.05)':'var(--bg3)'};border:1px solid ${isToday?'rgba(232,200,74,0.35)':'var(--border)'};border-radius:8px;padding:8px;min-height:80px`;
+
+    let html = `<div style="font-size:11px;font-weight:600;color:${isToday?'var(--accent)':'var(--text2)'};margin-bottom:6px">${days[date.getDay()]} ${date.getDate()}</div>`;
+    tasks.forEach(task => {
+      const actReg = state.activities.some(a => new Date(a.date).toDateString()===ds && a.discId===task.discId && a.topicId===task.topicId);
+      const lineStyle = task.done ? 'text-decoration:line-through;color:var(--text3)' : '';
+      html += `<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;cursor:pointer" onclick="openDayPopup(new Date('${dateKey}T12:00'))">
+        <div style="width:3px;height:16px;border-radius:99px;background:${task.discColor};flex-shrink:0"></div>
+        <div style="font-size:10px;${lineStyle};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${task.discIcon} ${task.discName.split(' ').slice(-1)[0]}</div>
+        ${task.done?'<div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>':''}
+      </div>`;
+    });
+    if (tasks.length === 0) html += `<div style="font-size:10px;color:var(--text3)">—</div>`;
+    html += `<div style="font-size:10px;color:var(--text3);margin-top:4px">${doneCnt}/${tasks.length}</div>`;
+    col.innerHTML = html;
+    col.onclick = (e) => { if (!e.target.closest('[onclick]') || e.target===col) openDayPopup(new Date(dateKey+'T12:00')); };
+    grid.appendChild(col);
+  }
+
+  // Week extras
+  const extrasEl = document.getElementById('agenda-week-extras');
+  if (extrasEl) {
+    const weekExtras = [];
+    for (let i=0;i<7;i++) {
+      const d = new Date(startOfWeek); d.setDate(startOfWeek.getDate()+i);
+      state.extras.filter(e=>e.date===getDateKey(d)).forEach(e=>weekExtras.push({...e, dateObj:d}));
+    }
+    extrasEl.innerHTML = weekExtras.length === 0
+      ? '<div style="color:var(--text2);font-size:13px">Nenhum compromisso extra essa semana.</div>'
+      : weekExtras.map(e=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">📌 ${e.desc} — ${e.dateObj.toLocaleDateString('pt-BR')}${e.time?' · '+e.time:''}</div>`).join('');
+  }
+}
+
+// ---- MONTHLY VIEW ----
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+
+function getRevisionDates() {
+  const revDates = {};
+  DISCIPLINES.forEach(disc => {
+    disc.temas.forEach(tema => {
+      const k = disc.id+'_'+tema.id;
+      const s = state.studied[k];
+      if (s?.nextRevDate) {
+        const ds = new Date(s.nextRevDate).toDateString();
+        if (!revDates[ds]) revDates[ds] = [];
+        revDates[ds].push(tema.nome.slice(0,18));
+      }
+    });
+  });
+  return revDates;
+}
+
+function renderCalendar() {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const titleEl = document.getElementById('cal-title');
+  if (titleEl) titleEl.textContent = months[calMonth] + ' ' + calYear;
+  const grid = document.getElementById('cal-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const revDates = getRevisionDates();
+  const todayStr = new Date().toDateString();
+
+  for (let i=0; i<firstDay; i++) {
+    const day = daysInPrev - firstDay + 1 + i;
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = `<div class="cal-day-num">${day}</div>`;
+    grid.appendChild(d);
+  }
+
+  for (let day=1; day<=daysInMonth; day++) {
+    const date = new Date(calYear, calMonth, day);
+    const ds = date.toDateString();
+    const isToday = ds === todayStr;
+    const d = document.createElement('div');
+    d.className = 'cal-day' + (isToday?' today-cal':'');
+
+    // Fix: use local ISO key
+    const localDateKey = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const extras = state.extras.filter(e => e.date === localDateKey);
+    const revs = revDates[ds] || [];
+
+    // Cycle tasks for this day
+    const cycleDate = new Date(calYear, calMonth, day);
+    cycleDate.setHours(0,0,0,0);
+    const cycleDayKey = getDateKey(cycleDate);
+    const cycleTasks = (buildCycle(cycleDate, 1)[cycleDayKey] || []).filter(t=>!t.carried);
+    const doneCnt = cycleTasks.filter(t=>t.done).length;
+    const totalCnt = cycleTasks.length;
+    const allDone = totalCnt > 0 && doneCnt === totalCnt;
+    const partial = totalCnt > 0 && doneCnt > 0 && !allDone;
+
+    let statusDot = '';
+    if (allDone) statusDot = `<div style="width:7px;height:7px;border-radius:50%;background:var(--green)"></div>`;
+    else if (partial) statusDot = `<div style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></div>`;
+
+    let inner = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px"><div class="cal-day-num">${day}</div>${statusDot}</div>`;
+
+    // Show cycle tasks with strike-through if done
+    cycleTasks.slice(0,2).forEach(task => {
+      inner += `<div class="cal-event cal-event-study" style="${task.done?'text-decoration:line-through;opacity:0.6':''}">${task.discIcon} ${task.discName.split(' ').slice(-1)[0]}</div>`;
+    });
+    if (cycleTasks.length > 2) inner += `<div style="font-size:9px;color:var(--text3)">+${cycleTasks.length-2} mais</div>`;
+    revs.slice(0,1).forEach(r => { inner += `<div class="cal-event cal-event-rev">🔁 ${r.slice(0,12)}</div>`; });
+    extras.slice(0,1).forEach(e => { inner += `<div class="cal-event cal-event-extra">📌 ${e.desc.slice(0,10)}</div>`; });
+
+    d.innerHTML = inner;
+    d.onclick = () => openDayPopup(new Date(calYear, calMonth, day));
+    grid.appendChild(d);
+  }
+
+  const total = firstDay + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i=1; i<=remaining; i++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = `<div class="cal-day-num">${i}</div>`;
+    grid.appendChild(d);
+  }
+}
+
+function renderExtras() {
+  const container = document.getElementById('extras-list');
+  const upcoming = state.extras
+    .filter(e => new Date(e.date) >= new Date(new Date().toDateString()))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  if (upcoming.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px">Nenhum compromisso extra cadastrado.</div>';
+    return;
+  }
+  container.innerHTML = upcoming.map(e => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="width:4px;border-radius:99px;align-self:stretch;background:var(--purple);min-height:20px"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${e.desc}</div>
+        <div style="font-size:11px;color:var(--text2);font-family:var(--font-mono)">${new Date(e.date+'T12:00').toLocaleDateString('pt-BR')}${e.time?' · '+e.time:''}</div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:11px;padding:3px 8px;color:var(--red)" onclick="deleteExtra('${e.id}')">✕</button>
+    </div>`).join('');
+}
+
+function openExtraModal() {
+  document.getElementById('extra-desc').value = '';
+  document.getElementById('extra-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('extra-time').value = '';
+  document.getElementById('modal-extra').classList.add('open');
+}
+
+function saveExtra() {
+  const desc = document.getElementById('extra-desc').value.trim();
+  const date = document.getElementById('extra-date').value;
+  const time = document.getElementById('extra-time').value;
+  if (!desc || !date) { alert('Preencha a descrição e a data.'); return; }
+  state.extras.push({id: Date.now().toString(), desc, date, time});
+  saveState();
+  document.getElementById('modal-extra').classList.remove('open');
+  renderAgendaPage();
+}
+
+function deleteExtra(id) {
+  state.extras = state.extras.filter(e => e.id !== id);
+  saveState();
+  renderAgendaPage();
+}
+
+// ===================== HABIT TRACKER =====================
+let currentHabitDay = null;
+
+function habitPrev() { habitMonth--; if(habitMonth<0){habitMonth=11;habitYear--;} renderHabitTracker(); }
+function habitNext() { habitMonth++; if(habitMonth>11){habitMonth=0;habitYear++;} renderHabitTracker(); }
+
+function renderHabitTracker() {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('habit-month-label').textContent = months[habitMonth]+' '+habitYear;
+  const grid = document.getElementById('habit-grid');
+  grid.innerHTML = '';
+  const firstDay = new Date(habitYear, habitMonth, 1).getDay();
+  const daysInMonth = new Date(habitYear, habitMonth+1, 0).getDate();
+  const todayD = new Date();
+  let countE=0, countA=0, countB=0;
+
+  for (let i=0;i<firstDay;i++) {
+    const ph = document.createElement('div');
+    ph.style.cssText='height:28px';
+    grid.appendChild(ph);
+  }
+
+  for (let day=1; day<=daysInMonth; day++) {
+    const dateObj = new Date(habitYear, habitMonth, day);
+    const key = dateObj.toDateString();
+    const h = state.habits[key] || {estudar:false, academia:false};
+    const isFuture = dateObj > todayD;
+    const bothDone = h.estudar && h.academia;
+    let cls = 'habit-day';
+    if (isFuture) cls += ' future';
+    else if (bothDone) { cls += ' done-both'; countB++; countE++; countA++; }
+    else if (h.estudar) { cls += ' done-estudar'; countE++; }
+    else if (h.academia) { cls += ' done-academia'; countA++; }
+
+    const d = document.createElement('div');
+    d.className = cls;
+    d.title = `${day}/${habitMonth+1}`;
+    d.textContent = day;
+    if (!isFuture) d.onclick = () => openHabitModal(key, day);
+    grid.appendChild(d);
+  }
+
+  document.getElementById('habit-count-estudar').textContent = countE + ' dias';
+  document.getElementById('habit-count-academia').textContent = countA + ' dias';
+  document.getElementById('habit-count-both').textContent = countB + ' dias';
+}
+
+function openHabitModal(dateKey, day) {
+  currentHabitDay = dateKey;
+  const h = state.habits[dateKey] || {estudar:false, academia:false};
+  document.getElementById('habit-modal-title').textContent = `Hábitos — ${day}/${habitMonth+1}/${habitYear}`;
+  document.getElementById('habit-check-estudar').checked = h.estudar || false;
+  document.getElementById('habit-check-academia').checked = h.academia || false;
+  document.getElementById('modal-habit').classList.add('open');
+}
+
+function saveHabit() {
+  if (!currentHabitDay) return;
+  state.habits[currentHabitDay] = {
+    estudar: document.getElementById('habit-check-estudar').checked,
+    academia: document.getElementById('habit-check-academia').checked,
+  };
+  saveState();
+  document.getElementById('modal-habit').classList.remove('open');
+  renderHabitTracker();
+}
+
+// ===================== SENSITIVE PAGE =====================
+let sensitiveFilter = 'all';
+
+function filterSensitive(f) {
+  sensitiveFilter = f;
+  ['all','pending','resolved'].forEach(x => {
+    const btn = document.getElementById('sf-'+x);
+    if (btn) {
+      btn.className = 'btn ' + (x===f ? 'btn-accent' : 'btn-ghost');
+      btn.style.cssText = 'font-size:11px;padding:5px 12px';
+    }
+  });
+  renderSensitivePage();
+}
+
+function sensitiveItemHTML(t, inPage) {
+  const disc = DISCIPLINES.find(d => d.id === t.discId);
+  const peso = disc?.peso || 0;
+  const relevancia = peso >= 20
+    ? {label:'Alta', color:'var(--red)'}
+    : peso >= 15 ? {label:'Média', color:'var(--accent)'}
+    : {label:'Baixa', color:'var(--text2)'};
+
+  return `<div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)">
+    <input type="checkbox" ${t.resolved?'checked':''} style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;margin-top:2px;flex-shrink:0"
+      onchange="resolveSensitive('${t.id}')">
+    <div style="flex:1;${t.resolved?'opacity:0.55':''}">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+        ${disc ? `<span style="font-size:12px;color:var(--text2)">${disc.icon} ${disc.name}</span>` : ''}
+        ${inPage ? `<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${relevancia.color}22;color:${relevancia.color};border:1px solid ${relevancia.color}33">Relevância ${relevancia.label} — ${peso}%</span>` : ''}
+      </div>
+      <div style="font-size:13px;font-weight:500;${t.resolved?'text-decoration:line-through;color:var(--text3)':''}">${t.obs}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${new Date(t.date).toLocaleDateString('pt-BR')}${t.resolved?' · ✓ Revisado':''}</div>
+    </div>
+  </div>`;
+}
+
+function renderSensitivePage() {
+  const container = document.getElementById('sensitive-page-list');
+  if (!container) return;
+  let list = [...state.sensitiveTopics].reverse();
+  if (sensitiveFilter === 'pending') list = list.filter(t => !t.resolved);
+  if (sensitiveFilter === 'resolved') list = list.filter(t => t.resolved);
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:20px 0;text-align:center">Nenhum tópico sensível encontrado.</div>';
+    return;
+  }
+  container.innerHTML = list.map(t => sensitiveItemHTML(t, true)).join('');
+}
+
+// ===================== DAY POPUP =====================
+function openDayPopup(date) {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const days = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const dateKey = getDateKey(date);
+  const ds = date.toDateString();
+
+  document.getElementById('popup-date-title').textContent = days[date.getDay()] + ', ' + date.getDate() + ' de ' + months[date.getMonth()];
+
+  const content = document.getElementById('popup-content');
+  content.innerHTML = '';
+
+  // Cycle tasks
+  const cycleDate = new Date(date); cycleDate.setHours(0,0,0,0);
+  const cycleTasks = (buildCycle(cycleDate, 1)[dateKey] || []).filter(t=>!t.carried);
+  if (cycleTasks.length > 0) {
+    const sec = document.createElement('div');
+    sec.innerHTML = '<div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Ciclo de estudos</div>';
+    cycleTasks.forEach(task => {
+      const row = document.createElement('div');
+      row.className = 'cycle-task' + (task.done?' done-task':'');
+      row.style.cssText = 'padding:9px 0';
+      row.innerHTML = `<input type="checkbox" ${task.done?'checked':''} onchange="toggleCycleTask('${task.taskKey}');openDayPopup(new Date('${dateKey}T12:00'))">
+        <div style="width:3px;min-height:20px;border-radius:99px;align-self:stretch;background:${task.discColor};flex-shrink:0"></div>
+        <div style="flex:1">
+          <div class="task-label" style="font-size:13px;font-weight:500;${task.done?'text-decoration:line-through;color:var(--text3)':''}">${task.discIcon} ${task.discName}</div>
+          <div style="font-size:12px;color:var(--text2);${task.done?'text-decoration:line-through;':''}">${task.topicName}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:1px">⏱ ${task.timeSlot}</div>
+        </div>`;
+      sec.appendChild(row);
+    });
+    content.appendChild(sec);
+  }
+
+  // Registered activities
+  const dayActs = state.activities.filter(a => new Date(a.date).toDateString() === ds);
+  if (dayActs.length > 0) {
+    const sec2 = document.createElement('div');
+    sec2.style.marginTop = '16px';
+    sec2.innerHTML = '<div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Atividades registradas</div>';
+    const typeLabel = {teoria:'Teoria',exercicio:'Exercícios',simulado:'Simulado',revisao:'Revisão'};
+    dayActs.forEach(a => {
+      const disc = DISCIPLINES.find(d=>d.id===a.discId);
+      const topic = disc?.temas.find(t=>t.id===a.topicId);
+      const pct = a.qTotal>0 ? Math.round(a.qHits/a.qTotal*100) : null;
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:8px 0;border-bottom:1px solid var(--border)';
+      row.innerHTML = `<div style="display:flex;gap:6px;align-items:center;margin-bottom:3px">
+        <span class="act-type-badge act-${a.type}">${typeLabel[a.type]||a.type}</span>
+        <span style="font-size:13px;font-weight:500;color:${disc?.color||'var(--text)'}">${disc?.icon||''} ${disc?.name||a.discId}</span>
+      </div>
+      ${topic?`<div style="font-size:12px;color:var(--text2)">${topic.nome}</div>`:''}
+      <div style="display:flex;gap:12px;margin-top:3px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--text3)">⏱ ${a.timeMin} min</span>
+        ${pct!==null?`<span style="font-size:11px;color:${pct<50?'var(--red)':pct<70?'var(--accent)':'var(--green)'};font-family:var(--font-mono)">${a.qHits}/${a.qTotal} (${pct}%)</span>`:''}
+        ${a.obs?`<span style="font-size:11px;color:var(--text3);font-style:italic">"${a.obs.slice(0,50)}"</span>`:''}
+      </div>`;
+      sec2.appendChild(row);
+    });
+    content.appendChild(sec2);
+  }
+
+  // Extras
+  const isoDate = dateKey;
+  const dayExtras = state.extras.filter(e=>e.date===isoDate);
+  if (dayExtras.length > 0) {
+    const sec3 = document.createElement('div');
+    sec3.style.marginTop = '16px';
+    sec3.innerHTML = '<div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Compromissos extras</div>';
+    dayExtras.forEach(e => {
+      const row = document.createElement('div');
+      row.style.cssText='padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center';
+      row.innerHTML=`<span style="font-size:16px">📌</span><div><div style="font-size:13px">${e.desc}</div>${e.time?`<div style="font-size:11px;color:var(--text3)">${e.time}</div>`:''}</div>`;
+      sec3.appendChild(row);
+    });
+    content.appendChild(sec3);
+  }
+
+  if (!cycleTasks.length && !dayActs.length && !dayExtras.length) {
+    content.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:12px 0">Nenhuma atividade registrada neste dia.</div>';
+  }
+
+  document.getElementById('day-popup').classList.add('open');
+}
+
+// ===================== CONFIRM DELETE =====================
+function confirmDelete(msg, onConfirm) {
+  document.getElementById('confirm-msg').textContent = msg;
+  const btn = document.getElementById('confirm-yes-btn');
+  btn.onclick = () => {
+    onConfirm();
+    document.getElementById('modal-confirm').classList.remove('open');
+  };
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+// ===================== BLOCO DE NOTAS =====================
+let notesFilter = 'all';
+
+function renderNotasPage() {
+  // Always repopulate discipline select fresh
+  const sel = document.getElementById('note-disc');
+  if (sel) {
+    sel.innerHTML = '<option value="">Geral</option>';
+    DISCIPLINES.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.id;
+      o.textContent = d.icon + ' ' + d.name;
+      sel.appendChild(o);
+    });
+  }
+  renderNotesFilter();
+  renderNotesList();
+}
+
+function renderNotesFilter() {
+  const container = document.getElementById('notes-filter');
+  if (!container) return;
+  const filters = [{id:'all', label:'Todas'}];
+  DISCIPLINES.forEach(d => {
+    if (state.notes.some(n => n.discId === d.id))
+      filters.push({id: d.id, label: d.icon + ' ' + d.name.split(' ').slice(-1)[0]});
+  });
+  if (state.notes.some(n => !n.discId)) filters.push({id:'geral', label:'Gerais'});
+  container.innerHTML = filters.map(f =>
+    `<button class="btn ${notesFilter===f.id?'btn-accent':'btn-ghost'}" style="font-size:11px;padding:5px 12px"
+      onclick="notesFilter='${f.id}';renderNotesList();renderNotesFilter()">${f.label}</button>`
+  ).join('');
+}
+
+// Post-it color palette — cycles through these per note
+const POSTIT_COLORS = [
+  {bg:'rgba(232,200,74,0.12)', border:'rgba(232,200,74,0.35)', accent:'#e8c84a'},
+  {bg:'rgba(96,165,250,0.1)',  border:'rgba(96,165,250,0.3)',  accent:'#60a5fa'},
+  {bg:'rgba(74,222,128,0.1)',  border:'rgba(74,222,128,0.3)',  accent:'#4ade80'},
+  {bg:'rgba(248,113,113,0.1)', border:'rgba(248,113,113,0.3)', accent:'#f87171'},
+  {bg:'rgba(167,139,250,0.1)', border:'rgba(167,139,250,0.3)', accent:'#a78bfa'},
+  {bg:'rgba(45,212,191,0.1)',  border:'rgba(45,212,191,0.3)',  accent:'#2dd4bf'},
+  {bg:'rgba(251,146,60,0.1)',  border:'rgba(251,146,60,0.3)',  accent:'#fb923c'},
+];
+
+function highlight(text, query) {
+  if (!query) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(escaped, 'gi'), m =>
+    `<mark style="background:rgba(232,200,74,0.4);color:var(--accent);border-radius:3px;padding:0 2px">${m}</mark>`
+  );
+}
+
+function renderNotesList() {
+  const container = document.getElementById('notes-list');
+  const emptyEl = document.getElementById('notes-empty');
+  if (!container) return;
+
+  const query = (document.getElementById('note-search')?.value || '').trim().toLowerCase();
+
+  let list = [...state.notes].reverse();
+  if (notesFilter === 'geral') list = list.filter(n => !n.discId);
+  else if (notesFilter !== 'all') list = list.filter(n => n.discId === notesFilter);
+  if (query) {
+    list = list.filter(n =>
+      (n.title||'').toLowerCase().includes(query) ||
+      (n.body||'').toLowerCase().includes(query) ||
+      DISCIPLINES.find(d => d.id === n.discId)?.name.toLowerCase().includes(query)
+    );
+  }
+
+  container.innerHTML = '';
+
+  if (list.length === 0) {
+    if (emptyEl) emptyEl.style.display = 'block';
+    container.style.display = 'none';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+  container.style.display = 'grid';
+
+  list.forEach((note, idx) => {
+    const disc = DISCIPLINES.find(d => d.id === note.discId);
+    // Use discipline color if available, else cycle through palette
+    let clr;
+    if (disc) {
+      clr = {bg: disc.color+'1a', border: disc.color+'55', accent: disc.color};
+    } else {
+      clr = POSTIT_COLORS[idx % POSTIT_COLORS.length];
+    }
+
+    const titleHl = highlight(note.title || 'Sem título', query);
+    const bodyHl = highlight(note.body, query);
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+      background:${clr.bg};
+      border:1px solid ${clr.border};
+      border-top:4px solid ${clr.accent};
+      border-radius:4px 12px 12px 4px;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      position:relative;
+      min-height:140px;
+    `;
+
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="font-size:13px;font-weight:500;line-height:1.4;flex:1">${titleHl}</div>
+        <button style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:0;flex-shrink:0;line-height:1;transition:color .15s"
+          onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'"
+          onclick="deleteNote('${note.id}')" title="Excluir nota">✕</button>
+      </div>
+      <div style="font-size:12px;color:var(--text2);white-space:pre-wrap;line-height:1.6;flex:1">${bodyHl}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding-top:8px;border-top:1px solid ${clr.border}">
+        ${disc ? `<span style="font-size:10px;color:${clr.accent}">${disc.icon} ${disc.name.split(' ').slice(-1)[0]}</span>` : `<span style="font-size:10px;color:var(--text3)">Geral</span>`}
+        <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">${new Date(note.date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</span>
+      </div>`;
+
+    container.appendChild(card);
+  });
+}
+
+function saveNote() {
+  const title = document.getElementById('note-title')?.value.trim();
+  const discId = document.getElementById('note-disc')?.value || '';
+  const body = document.getElementById('note-body')?.value.trim();
+  if (!body) { alert('Escreva algo antes de salvar.'); return; }
+  state.notes.push({
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    title: title || 'Sem título',
+    discId: discId || null,
+    body,
+  });
+  saveState();
+  document.getElementById('note-title').value = '';
+  document.getElementById('note-body').value = '';
+  document.getElementById('note-disc').value = '';
+  renderNotesList();
+  renderNotesFilter();
+}
+
+function deleteNote(id) {
+  confirmDelete('Excluir esta nota? A ação não pode ser desfeita.', () => {
+    state.notes = state.notes.filter(n => n.id !== id);
+    saveState();
+    renderNotesList();
+    renderNotesFilter();
+  });
+}
+
+// ===================== INIT =====================
+renderHome();
+
+</script>
+</body>
+</html>
